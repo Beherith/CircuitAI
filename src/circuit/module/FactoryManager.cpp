@@ -195,9 +195,11 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 				finishedHandler[unitDefId] = assistFinishedHandler;
 				idleHandler[unitDefId] = assistIdleHandler;
 				destroyedHandler[unitDefId] = assistDestroyedHandler;
-				if (commDef->CanBuild(cdef)) {
-					assistDef = cdef;
-				}
+				// FIXME: BA
+//				if (commDef->CanBuild(cdef)) {
+//					assistDef = cdef;
+//				}
+				// FIXME: BA
 			}
 		}
 
@@ -220,6 +222,15 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 			cdef->AddEnemyRole(ROLE_TYPE(COMM));
 		}
 	}
+	// FIXME: BA
+	assistDef = circuit->GetCircuitDef("armnanotc");
+	CCircuitDef::Id unitDefId = assistDef->GetId();
+	createdHandler[unitDefId] = assistCreatedHandler;
+	finishedHandler[unitDefId] = assistFinishedHandler;
+	idleHandler[unitDefId] = assistIdleHandler;
+	destroyedHandler[unitDefId] = assistDestroyedHandler;
+	factoryPower -= assistDef->GetBuildSpeed() - 4.f;
+	// FIXME: BA
 
 	ReadConfig();
 

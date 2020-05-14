@@ -211,10 +211,12 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 				// BA: float metalConverts = unitDef->GetMakesResource(metalRes);
 				//     float metalExtracts = unitDef->GetExtractsResource(metalRes);
 				//     float netMetal = unitDef->GetResourceMake(metalRes) - unitDef->GetUpkeep(metalRes);
-				if (((it = customParams.find("ismex")) != customParams.end()) && (utils::string_to_int(it->second) == 1)) {
-					finishedHandler[kv.first] = mexFinishedHandler;
-					mexDef = cdef;  // cormex
-				}
+				// FIXME: BA
+//				if (((it = customParams.find("ismex")) != customParams.end()) && (utils::string_to_int(it->second) == 1)) {
+//					finishedHandler[kv.first] = mexFinishedHandler;
+//					mexDef = cdef;  // cormex
+//				}
+				// FIXME: BA
 			}
 
 			// factory
@@ -226,7 +228,9 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 			// energy
 			// BA: float netEnergy = unitDef->GetResourceMake(energyRes) - unitDef->GetUpkeep(energyRes);
 			auto it = customParams.find("income_energy");
-			if ((it != customParams.end()) && (utils::string_to_float(it->second) > 1)) {
+			if (((it != customParams.end()) && (utils::string_to_float(it->second) > 1))
+				|| (cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes) > 1))
+			{
 				finishedHandler[kv.first] = energyFinishedHandler;
 				allEnergyDefs.insert(cdef);
 			}
@@ -240,6 +244,10 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 			}
 		}
 	}
+	// FIXME: BA
+	mexDef = circuit->GetCircuitDef("armmex");
+	finishedHandler[mexDef->GetId()] = mexFinishedHandler;
+	// FIXME: BA
 
 	ReadConfig();
 
@@ -307,7 +315,9 @@ void CEconomyManager::ReadConfig()
 		}
 		const std::map<std::string, std::string>& customParams = cdef->GetDef()->GetCustomParams();
 		auto it = customParams.find("income_energy");
-		float make = (it != customParams.end()) ? utils::string_to_float(it->second) : 1.f;
+		float make = (it != customParams.end())
+				? utils::string_to_float(it->second)
+				: cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes);
 		x[i] = cdef->GetCost() / make;
 		y[i] = engies[i].second + 0.5;  // +0.5 to be sure precision errors will not decrease integer part
 	}
@@ -505,7 +515,11 @@ void CEconomyManager::AddEnergyDefs(const std::set<CCircuitDef*>& buildDefs)
 		SEnergyInfo engy;
 		engy.cdef = cdef;
 		engy.cost = cdef->GetCost();
-		engy.make = utils::string_to_float(cdef->GetDef()->GetCustomParams().find("income_energy")->second);
+		auto customParams = cdef->GetDef()->GetCustomParams();
+		auto it = customParams.find("income_energy");
+		engy.make = (it != customParams.end())
+				? utils::string_to_float(it->second)
+				: cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes);
 		engy.costDivMake = engy.cost / engy.make;
 		engy.limit = engyPol->GetValueAt(engy.costDivMake);
 		energyInfos.push_back(engy);
@@ -887,7 +901,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 	// Find place to build
 	AIFloat3 buildPos = -RgtVector;
 	CMetalManager* metalManager = circuit->GetMetalManager();
-	if (bestDef->GetCost() < 1000.0f) {
+	if (bestDef->GetCost() < 200.0f) {
 		int index = metalManager->FindNearestSpot(position);
 		if (index != -1) {
 			const CMetalData::Metals& spots = metalManager->GetSpots();
@@ -1141,6 +1155,7 @@ IBuilderTask* CEconomyManager::UpdateStorageTasks()
 
 IBuilderTask* CEconomyManager::UpdatePylonTasks()
 {
+	return nullptr;
 	CBuilderManager* builderManager = circuit->GetBuilderManager();
 	if (!builderManager->CanEnqueueTask()) {
 		return nullptr;
@@ -1275,6 +1290,7 @@ void CEconomyManager::UpdateEconomy()
 	const float curEnergy = economy->GetCurrent(energyRes);
 	const float storEnergy = GetStorage(energyRes);
 	isEnergyEmpty = curEnergy < storEnergy * 0.1f;
+	isEnergyStalling &= curEnergy < storEnergy * 0.7f;
 
 	if (ecoFrame <= efInfo.startFrame) {
 		energyFactor = efInfo.startFactor;

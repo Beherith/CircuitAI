@@ -23,7 +23,7 @@ namespace springai {
 namespace circuit {
 
 #define INCOME_SAMPLES	5
-#define HIDDEN_STORAGE	10000.0f
+#define HIDDEN_STORAGE	.0f
 
 class IBuilderTask;
 class CLagrangeInterPol;

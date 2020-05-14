@@ -1,5 +1,4 @@
 #include "../role.as"
-#include "../commander.as"
 
 
 namespace Builder {
@@ -8,27 +7,15 @@ namespace Builder {
 
 IUnitTask@ MakeTask(CCircuitUnit@ unit)
 {
-//	const CCircuitDef@ cdef = unit.GetCircuitDef();
-//
-//	if (cdef.IsRoleAny(RM::COMM)) {  // hide commander?
-//		const Hide::SHide@ hide = Hide::getForUnitDef(cdef);
-//		if (hide !is null) {
-//			if ((ai.GetLastFrame() < hide.frame) || (builderMgr.GetWorkerCount() <= 2)) {
-//				return builderMgr.MakeBuilderTask(unit);
-//			}
-//			if (enemyMgr.GetMobileThreat()/* / ai.GetAllySize()*/ >= hide.threat) {
-//				return builderMgr.MakeCommTask(unit);
-//			}
-//			const bool isHide = hide.isAir && (enemyMgr.GetEnemyCost(RT::AIR) > 1.f);
-//			return isHide ? builderMgr.MakeCommTask(unit) : builderMgr.MakeBuilderTask(unit);
-//		}
-//	}
-//
-//	return builderMgr.MakeBuilderTask(unit);
-
 //	aiDelPoint(lastPos);
 //	lastPos = unit.GetPos(ai.GetLastFrame());
 //	aiAddPoint(lastPos, "task");
+
+//	IUnitTask@ task = builderMgr.DefaultMakeTask(unit);
+//	if ((task !is null) && (task.GetType() == 5)) {  // Type::BUILDER
+//		aiAddPoint(task.GetPos(), "task");
+//	}
+//	return task;
 	return builderMgr.DefaultMakeTask(unit);
 }
 

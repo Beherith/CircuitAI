@@ -125,7 +125,17 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 	id = def->GetUnitDefId();
 
 	buildDistance = def->GetBuildDistance();
-	buildSpeed    = def->GetBuildSpeed();
+	// FIXME: BA
+//	buildSpeed    = def->GetBuildSpeed();
+	std::string name = def->GetName();
+	if (name == "armcom") {
+		buildSpeed = 5.f;
+	} else if (name == "armnanotc") {
+		buildSpeed = 12.f;
+	} else {
+		buildSpeed = 10.f;
+	}
+	// FIXME: BA
 	maxThisUnit   = def->GetMaxThisUnit();
 
 //	maxRange[static_cast<RangeT>(RangeType::MAX)] = def->GetMaxWeaponRange();
@@ -365,14 +375,14 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 
 		if (wd->IsManualFire() && (reloadTime < bestDGunReload)) {
 			// NOTE: Disable commander's dgun, because no usage atm
-			if (customParams.find("manualfire") == customParams.end()) {
+//			if (customParams.find("manualfire") == customParams.end()) {
 				bestDGunReload = reloadTime;
 				delete bestDGunMnt;
 				bestDGunMnt = mount;
 				hasDGunAA |= (weaponCat & circuit->GetAirCategory()) && isAirWeapon;
-			} else {  // FIXME: Dynamo com workaround
-				delete mount;
-			}
+//			} else {  // FIXME: Dynamo com workaround
+//				delete mount;
+//			}
 		} else if (wd->IsShield()) {
 			if (shieldMount == nullptr) {
 				shieldMount = mount;  // NOTE: Unit may have more than 1 shield

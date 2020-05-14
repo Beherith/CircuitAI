@@ -7,9 +7,9 @@ void Init(dictionary@ categories)
 {
 	aiLog("AngelScript Rules!");
 
-	categories["air"]   = "FIXEDWING GUNSHIP";
-	categories["land"]  = "LAND SINK TURRET SHIP SWIM FLOAT HOVER";
-	categories["water"] = "SUB";
+	categories["air"]   = "VTOL NOTSUB";
+	categories["land"]  = "SURFACE NOTSUB";
+	categories["water"] = "UNDERWATER NOTHOVER";
 	categories["bad"]   = "TERRAFORM STUPIDTARGET MINE";
 	categories["good"]  = "TURRET FLOAT";
 }
