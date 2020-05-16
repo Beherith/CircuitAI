@@ -76,7 +76,7 @@ public:
 	bool IsHighPriority(CAllyUnit* unit) const;
 
 	CCircuitDef* GetFactoryToBuild(springai::AIFloat3 position = -RgtVector,
-								   bool isStart = false, bool isReset = false);
+			bool isStart = false, bool isReset = false);
 	void AddFactory(const CCircuitDef* cdef);
 	void DelFactory(const CCircuitDef* cdef);
 	CCircuitDef* GetRoleDef(const CCircuitDef* facDef, CCircuitDef::RoleT role) const;

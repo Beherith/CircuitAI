@@ -411,7 +411,7 @@ void CMilitaryManager::ReadConfig()
 
 	defaultPorc = circuit->GetCircuitDef(porc.get("default", "").asCString());
 	if (defaultPorc == nullptr) {
-		defaultPorc = circuit->GetEconomyManager()->GetDefaultDef();
+		defaultPorc = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}
 }
 

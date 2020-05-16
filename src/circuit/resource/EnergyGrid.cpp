@@ -224,7 +224,7 @@ void CEnergyGrid::Update()
 	markFrame = circuit->GetLastFrame();
 
 	circuit->UpdateFriendlyUnits();
-	CCircuitDef* mexDef = circuit->GetEconomyManager()->GetMexDef();
+	const auto& allMexDefs = circuit->GetEconomyManager()->GetAllMexDefs();
 	const CAllyTeam::AllyUnits& friendlies = circuit->GetFriendlyUnits();
 	static std::vector<CAllyUnit*> tmpMexes;  // NOTE: micro-opt
 	static std::vector<CAllyUnit*> tmpPylons;  // NOTE: micro-opt
@@ -235,7 +235,7 @@ void CEnergyGrid::Update()
 		if (unit->GetUnit()->IsBeingBuilt()) {
 			continue;
 		}
-		if (*unit->GetCircuitDef() == *mexDef) {
+		if (allMexDefs.find(unit->GetCircuitDef()->GetId()) != allMexDefs.end()) {
 			tmpMexes.push_back(unit);
 		}
 		if (pylonRanges.find(unit->GetCircuitDef()->GetId()) != pylonRanges.end()) {

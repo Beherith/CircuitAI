@@ -14,7 +14,6 @@
 #include "unit/CircuitUnit.h"
 #include "CircuitAI.h"
 #include "util/GameAttribute.h"
-#include "util/MaskHandler.h"
 #include "util/Utils.h"
 
 #include "angelscript/include/angelscript.h"
@@ -105,9 +104,11 @@ CInitScript::CInitScript(CScriptManager* scr, CCircuitAI* ai)
 	r = engine->RegisterObjectProperty("TypeMask", "Type type", asOFFSET(CMaskHandler::TypeMask, type)); ASSERT(r >= 0);
 	r = engine->RegisterObjectProperty("TypeMask", "Mask mask", asOFFSET(CMaskHandler::TypeMask, mask)); ASSERT(r >= 0);
 
+	CMaskHandler* sideMasker = &circuit->GetGameAttribute()->GetSideMasker();
 	CMaskHandler* roleMasker = &circuit->GetGameAttribute()->GetRoleMasker();
 	r = engine->RegisterObjectType("CMaskHandler", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);
-	r = engine->RegisterGlobalProperty("CMaskHandler roleMasker", roleMasker); ASSERT(r >= 0);
+	r = engine->RegisterGlobalProperty("CMaskHandler aiSideMasker", sideMasker); ASSERT(r >= 0);
+	r = engine->RegisterGlobalProperty("CMaskHandler aiRoleMasker", roleMasker); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMaskHandler", "TypeMask GetTypeMask(const string& in)", asMETHOD(CMaskHandler, GetTypeMask), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterTypedef("Id", "int"); ASSERT(r >= 0);
@@ -141,23 +142,27 @@ void CInitScript::Init()
 
 	asIScriptContext* ctx = script->PrepareContext(info.init);
 	ctx->SetArgObject(0, dict);
-	script->Exec(ctx);
+	script->Exec(ctx);  // side, role
 	script->ReturnContext(ctx);
 
-	Game* game = circuit->GetGame();
-	std::array<std::pair<std::string, int*>, 5> cats = {
-		std::make_pair("air",   &circuit->airCategory),
-		std::make_pair("land",  &circuit->landCategory),
-		std::make_pair("water", &circuit->waterCategory),
-		std::make_pair("bad",   &circuit->badCategory),
-		std::make_pair("good",  &circuit->goodCategory)
-	};
-	for (const auto& kv : cats) {
-		std::string value;
-		if (dict->Get(kv.first, &value, dict->GetTypeId(kv.first))) {
-			*kv.second = game->GetCategoriesFlag(value.c_str());
+	CScriptDictionary* catDict;
+	if (dict->Get("category", &catDict, dict->GetTypeId("category"))) {
+		Game* game = circuit->GetGame();
+		std::array<std::pair<std::string, int*>, 5> cats = {
+			std::make_pair("air",   &circuit->airCategory),
+			std::make_pair("land",  &circuit->landCategory),
+			std::make_pair("water", &circuit->waterCategory),
+			std::make_pair("bad",   &circuit->badCategory),
+			std::make_pair("good",  &circuit->goodCategory)
+		};
+		for (const auto& kv : cats) {
+			std::string value;
+			if (catDict->Get(kv.first, &value, catDict->GetTypeId(kv.first))) {
+				*kv.second = game->GetCategoriesFlag(value.c_str());
+			}
 		}
 	}
+	catDict->Release();
 
 	dict->Release();
 }
@@ -166,20 +171,20 @@ void CInitScript::RegisterMgr()
 {
 	asIScriptEngine* engine = script->GetEngine();
 
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	int r = engine->RegisterObjectType("CTerrainManager", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);
-	r = engine->RegisterGlobalProperty("CTerrainManager terrainMgr", terrainManager); ASSERT(r >= 0);
+	r = engine->RegisterGlobalProperty("CTerrainManager aiTerrainMgr", terrainMgr); ASSERT(r >= 0);
 	r = engine->RegisterGlobalFunction("int GetTerrainWidth()", asFUNCTION(CTerrainManager::GetTerrainWidth), asCALL_CDECL); ASSERT(r >= 0);
 	r = engine->RegisterGlobalFunction("int GetTerrainHeight()", asFUNCTION(CTerrainManager::GetTerrainHeight), asCALL_CDECL); ASSERT(r >= 0);
 
-	CSetupManager* setupManager = circuit->GetSetupManager();
+	CSetupManager* setupMgr = circuit->GetSetupManager();
 	r = engine->RegisterObjectType("CSetupManager", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);
-	r = engine->RegisterGlobalProperty("CSetupManager setupMgr", setupManager); ASSERT(r >= 0);
+	r = engine->RegisterGlobalProperty("CSetupManager aiSetupMgr", setupMgr); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CSetupManager", "CCircuitDef@ GetCommChoice() const", asMETHOD(CSetupManager, GetCommChoice), asCALL_THISCALL); ASSERT(r >= 0);
 
 	CEnemyManager* enemyMgr = circuit->GetEnemyManager();
 	r = engine->RegisterObjectType("CEnemyManager", 0, asOBJ_REF | asOBJ_NOHANDLE); ASSERT(r >= 0);
-	r = engine->RegisterGlobalProperty("CEnemyManager enemyMgr", enemyMgr); ASSERT(r >= 0);
+	r = engine->RegisterGlobalProperty("CEnemyManager aiEnemyMgr", enemyMgr); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetEnemyThreat(Type) const", asMETHODPR(CEnemyManager, GetEnemyThreat, (CCircuitDef::RoleT) const, float), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetMobileThreat() const", asMETHOD(CEnemyManager, GetMobileThreat), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetEnemyCost(Type) const", asMETHOD(CEnemyManager, GetEnemyCost), asCALL_THISCALL); ASSERT(r >= 0);

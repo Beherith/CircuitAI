@@ -90,6 +90,7 @@ CCircuitAI::CCircuitAI(OOAICallback* clb)
 		//       and lastFrame check will misbehave until first update event.
 		, lastFrame(-2)
 		, skirmishAIId(clb != nullptr ? clb->GetSkirmishAIId() : -1)
+		, teamSide(0)
 		, callback(std::unique_ptr<COOAICallback>(new COOAICallback(clb)))
 		, engine(nullptr)
 		, cheats(std::unique_ptr<Cheats>(clb->GetCheats()))
@@ -547,6 +548,7 @@ int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICall
 
 	script = new CInitScript(GetScriptManager(), this);
 	script->Init();
+	teamSide = gameAttribute->GetSideMasker().GetType(game->GetTeamSide(teamId));
 
 	std::string cfgOption = InitOptions();  // Inits GameAttribute
 	InitWeaponDefs();

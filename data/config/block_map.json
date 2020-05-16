@@ -114,13 +114,13 @@
 		}
 	},
 	"instance": {
-		"fac_land": ["armlab", "armalab", "armvp", "armavp"],
-		"solar": ["armsolar"],
+		"fac_land": ["armlab", "armalab", "armvp", "armavp", "corlab", "coralab", "corvp", "coravp"],
+		"solar": ["armsolar", "corsolar"],
 		"wind": ["armwin", "corwin"],
-		"store": ["armmstor", "armestor"],
+		"store": ["armmstor", "armestor", "cormstor", "corestor"],
 		"mex": ["armmex", "cormex"],
-		"def_low": ["armllt"],
-		"caretaker": ["armnanotc", "armasp"],
+		"def_low": ["armllt", "corllt"],
+		"caretaker": ["armnanotc", "armasp", "cornanotc", "corasp"],
 		"small": ["armrad"]
 	}
 }

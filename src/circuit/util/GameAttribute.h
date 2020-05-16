@@ -39,6 +39,7 @@ public:
 	CMetalData& GetMetalData() { return metalData; }
 	CTerrainData& GetTerrainData() { return terrainData; }
 	CMaskHandler& GetRoleMasker() { return roleMasker; }
+	CMaskHandler& GetSideMasker() { return sideMasker; }
 
 private:
 	bool isInitialized;
@@ -48,6 +49,7 @@ private:
 	CMetalData metalData;
 	CTerrainData terrainData;
 	CMaskHandler roleMasker;
+	CMaskHandler sideMasker;
 };
 
 } // namespace circuit

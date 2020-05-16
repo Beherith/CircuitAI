@@ -73,6 +73,8 @@ private:
 	Type firstUnused = 0;
 };
 
+using SideType = CMaskHandler::Type;
+
 } // namespace circuit
 
 #endif // SRC_CIRCUIT_UTIL_MASKHANDLER_H_

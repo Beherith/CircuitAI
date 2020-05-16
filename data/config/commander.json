@@ -31,7 +31,7 @@
 				"time": 480,  // seconds
 				"threat": 30,
 				"air": true,
-				"task_rad": 2000.0
+				"task_rad": 1000.0
 			}
 		}
 	}

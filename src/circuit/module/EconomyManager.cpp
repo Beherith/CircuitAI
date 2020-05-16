@@ -16,6 +16,7 @@
 #include "terrain/TerrainManager.h"
 #include "CircuitAI.h"
 #include "util/math/LagrangeInterPol.h"
+#include "util/GameAttribute.h"
 #include "util/Scheduler.h"
 #include "util/Utils.h"
 #include "json/json.h"
@@ -41,7 +42,6 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 		: IModule(circuit, new CEconomyScript(circuit->GetScriptManager(), this))
 		, energyGrid(nullptr)
 		, pylonDef(nullptr)
-		, mexDef(nullptr)
 		, storeDef(nullptr)
 		, mexCount(0)
 		, lastFacFrame(-1)
@@ -177,6 +177,8 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 		}
 	};
 
+	ReadConfig();
+
 	float maxAreaDivCost = .0f;
 	float maxStoreDivCost = .0f;
 	CCircuitDef* commDef = circuit->GetSetupManager()->GetCommChoice();
@@ -242,22 +244,32 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 				finishedHandler[cdef->GetId()] = comFinishedHandler;
 				destroyedHandler[cdef->GetId()] = comDestroyedHandler;
 			}
+
+			for (SSideInfo& sideInfo : sideInfos) {
+				if (cdef->CanBuild(sideInfo.mexDef)) {
+					mexDefs[cdef->GetId()] = sideInfo.mexDef;
+				}
+				if (cdef->CanBuild(sideInfo.defaultDef)) {
+					defaultDefs[cdef->GetId()] = sideInfo.defaultDef;
+				}
+			}
 		}
 	}
-	// FIXME: BA
-	mexDef = circuit->GetCircuitDef("armmex");
-	finishedHandler[mexDef->GetId()] = mexFinishedHandler;
-	// FIXME: BA
 
-	ReadConfig();
-
-	if (mexDef == nullptr) {
-		mexDef = defaultDef;
+	// FIXME: BA
+	for (unsigned side = 0; side < sideInfos.size(); ++side) {
+		CCircuitDef*& mexDef = sideInfos[side].mexDef;
+		if (mexDef != nullptr) {
+			finishedHandler[mexDef->GetId()] = mexFinishedHandler;
+		} else {
+			mexDef = sideInfos[side].defaultDef;
+		}
 	}
 	if (pylonDef == nullptr) {
-		pylonDef = defaultDef;
+		pylonDef = sideInfos[0].defaultDef;
 		pylonRange = PYLON_RANGE;
 	}
+	// FIXME: BA
 }
 
 CEconomyManager::~CEconomyManager()
@@ -265,7 +277,7 @@ CEconomyManager::~CEconomyManager()
 	delete metalRes;
 	delete energyRes;
 	delete economy;
-	delete engyPol;
+	utils::free_clear(engyPols);
 }
 
 void CEconomyManager::ReadConfig()
@@ -289,54 +301,79 @@ void CEconomyManager::ReadConfig()
 	efInfo.fraction = (efInfo.endFactor - efInfo.startFactor) / (efInfo.endFrame - efInfo.startFrame);
 	energyFactor = efInfo.startFactor;
 
-	// Using cafus, armfus, armsolar as control points
-	// FIXME: Дабы ветка параболы заработала надо использовать [x <= 0; y < min limit) для точки перегиба
-	constexpr unsigned MAX_CTRL_POINTS = 3;
-	std::vector<std::pair<std::string, int>> engies;
-	std::string type = circuit->GetTerrainManager()->IsWaterMap() ? "water" : "land";
-	const Json::Value& surf = energy[type];
-	unsigned si = 0;
-	for (const std::string& engy : surf.getMemberNames()) {
-		const int min = surf[engy][0].asInt();
-		const int max = surf[engy].get(1, min).asInt();
-		const int limit = min + rand() % (max - min + 1);
-		engies.push_back(std::make_pair(engy, limit));
-		if (++si >= MAX_CTRL_POINTS) {
-			break;
+	CMaskHandler& sideMasker = circuit->GetGameAttribute()->GetSideMasker();
+	engyPols.resize(sideMasker.GetMasks().size());
+	sideInfos.resize(sideMasker.GetMasks().size());
+	const Json::Value& engySides = energy["side"];
+	const Json::Value& metal = econ["metal"];
+	const Json::Value& deflt = econ["default"];
+	for (const auto& kv : sideMasker.GetMasks()) {
+		const Json::Value& surfs = engySides[kv.first];
+
+		// Energy
+		// Using cafus, armfus, armsolar as control points
+		// FIXME: Дабы ветка параболы заработала надо использовать [x <= 0; y < min limit) для точки перегиба
+		constexpr unsigned MAX_CTRL_POINTS = 3;
+		std::vector<std::pair<std::string, int>> engies;
+		std::string type = circuit->GetTerrainManager()->IsWaterMap() ? "water" : "land";
+		const Json::Value& surf = surfs[type];
+		unsigned si = 0;
+		for (const std::string& engy : surf.getMemberNames()) {
+			const int min = surf[engy][0].asInt();
+			const int max = surf[engy].get(1, min).asInt();
+			const int limit = min + rand() % (max - min + 1);
+			engies.push_back(std::make_pair(engy, limit));
+			if (++si >= MAX_CTRL_POINTS) {
+				break;
+			}
 		}
-	}
 
-	CLagrangeInterPol::Vector x(engies.size()), y(engies.size());
-	for (unsigned i = 0; i < engies.size(); ++i) {
-		CCircuitDef* cdef = circuit->GetCircuitDef(engies[i].first.c_str());
-		if (cdef == nullptr) {
-			circuit->LOG("CONFIG %s: has unknown UnitDef '%s'", cfgName.c_str(), engies[i].first.c_str());
-			continue;
+		CLagrangeInterPol::Vector x(engies.size()), y(engies.size());
+		for (unsigned i = 0; i < engies.size(); ++i) {
+			const char* name = engies[i].first.c_str();
+			CCircuitDef* cdef = circuit->GetCircuitDef(name);
+			if (cdef == nullptr) {
+				circuit->LOG("CONFIG %s: has unknown UnitDef '%s'", cfgName.c_str(), name);
+				continue;
+			}
+			const std::map<std::string, std::string>& customParams = cdef->GetDef()->GetCustomParams();
+			auto it = customParams.find("income_energy");
+			float make = (it != customParams.end())
+					? utils::string_to_float(it->second)
+					: cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes);
+			x[i] = cdef->GetCost() / make;
+			y[i] = engies[i].second + 0.5;  // +0.5 to be sure precision errors will not decrease integer part
 		}
-		const std::map<std::string, std::string>& customParams = cdef->GetDef()->GetCustomParams();
-		auto it = customParams.find("income_energy");
-		float make = (it != customParams.end())
-				? utils::string_to_float(it->second)
-				: cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes);
-		x[i] = cdef->GetCost() / make;
-		y[i] = engies[i].second + 0.5;  // +0.5 to be sure precision errors will not decrease integer part
-	}
-	engyPol = new CLagrangeInterPol(x, y);  // Alternatively use CGaussSolver to compute polynomial - faster on reuse
+		engyPols[kv.second.type] = new CLagrangeInterPol(x, y);  // Alternatively use CGaussSolver to compute polynomial - faster on reuse
 
-	// NOTE: Alternative to CLagrangeInterPol
-//	CGaussSolver solver;
-//	CGaussSolver::Matrix a = {
-//		{1, x[0], x[0]*x[0]},
-//		{1, x[1], x[1]*x[1]},
-//		{1, x[2], x[2]*x[2]}
-//	};
-//	CGaussSolver::Vector r = solver.Solve(a, y);
-//	circuit->LOG("y = %f*x^0 + %f*x^1 + %f*x^2", r[0], r[1], r[2]);
+		// NOTE: Alternative to CLagrangeInterPol
+//		CGaussSolver solver;
+//		CGaussSolver::Matrix a = {
+//			{1, x[0], x[0]*x[0]},
+//			{1, x[1], x[1]*x[1]},
+//			{1, x[2], x[2]*x[2]}
+//		};
+//		CGaussSolver::Vector r = solver.Solve(a, y);
+//		circuit->LOG("y = %f*x^0 + %f*x^1 + %f*x^2", r[0], r[1], r[2]);
 
-	// NOTE: Must have
-	defaultDef = circuit->GetCircuitDef(econ["default"].asCString());
-	if (defaultDef == nullptr) {
-		throw CException("economy.default");
+		SSideInfo& sideInfo = sideInfos[kv.second.type];
+
+		// Metal
+		const char* name = metal[kv.first].asCString();
+		CCircuitDef* cdef = circuit->GetCircuitDef(name);
+		if (cdef != nullptr) {
+			sideInfo.mexDef = cdef;
+			allMexDefs.insert(cdef->GetId());
+		} else {
+			circuit->LOG("CONFIG %s: has unknown UnitDef '%s'", cfgName.c_str(), name);
+		}
+
+		// Default
+		// NOTE: Must have
+		sideInfo.defaultDef = circuit->GetCircuitDef(deflt[kv.first].asCString());
+		if (sideInfo.defaultDef == nullptr) {
+			throw CException("economy.default");
+		}
 	}
 }
 
@@ -521,7 +558,7 @@ void CEconomyManager::AddEnergyDefs(const std::set<CCircuitDef*>& buildDefs)
 				? utils::string_to_float(it->second)
 				: cdef->GetDef()->GetResourceMake(energyRes) - cdef->GetDef()->GetUpkeep(energyRes);
 		engy.costDivMake = engy.cost / engy.make;
-		engy.limit = engyPol->GetValueAt(engy.costDivMake);
+		engy.limit = engyPols[circuit->GetTeamSide()]->GetValueAt(engy.costDivMake);
 		energyInfos.push_back(engy);
 	}
 
@@ -564,6 +601,11 @@ void CEconomyManager::RemoveEnergyDefs(const std::set<CCircuitDef*>& buildDefs)
 			++it;
 		}
 	}
+}
+
+const CEconomyManager::SSideInfo& CEconomyManager::GetSideInfo() const
+{
+	return sideInfos[circuit->GetTeamSide()];
 }
 
 void CEconomyManager::UpdateResourceIncome()
@@ -718,10 +760,11 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 	}
 
 	IBuilderTask* task = nullptr;
+	CCircuitDef* mexDef = GetMexDef(unit->GetCircuitDef());
 
 	// check uncolonized mexes
 	bool isEnergyStalling = IsEnergyStalling();
-	if (!isEnergyStalling && mexDef->IsAvailable(circuit->GetLastFrame())) {
+	if ((mexDef != nullptr) && !isEnergyStalling && mexDef->IsAvailable(circuit->GetLastFrame())) {
 		float cost = mexDef->GetCost();
 		unsigned maxCount = builderManager->GetBuildPower() / cost * 8 + 2;
 		if (builderManager->GetTasks(IBuilderTask::BuildType::MEX).size() < maxCount) {
@@ -731,7 +774,6 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 			CMap* map = circuit->GetMap();
 			CMetalData::PointPredicate predicate;
 			if (unit != nullptr) {
-				CCircuitDef* mexDef = this->mexDef;
 				predicate = [this, &spots, map, mexDef, terrainManager, unit](int index) {
 					return (IsAllyOpenSpot(index) &&
 							terrainManager->CanBeBuiltAtSafe(mexDef, spots[index].position) &&  // hostile environment
@@ -739,7 +781,6 @@ IBuilderTask* CEconomyManager::UpdateMetalTasks(const AIFloat3& position, CCircu
 							map->IsPossibleToBuildAt(mexDef->GetDef(), spots[index].position, UNIT_COMMAND_BUILD_NO_FACING));
 				};
 			} else {
-				CCircuitDef* mexDef = this->mexDef;
 				predicate = [this, &spots, map, mexDef, terrainManager, builderManager](int index) {
 					return (IsAllyOpenSpot(index) &&
 							terrainManager->CanBeBuiltAtSafe(mexDef, spots[index].position) &&  // hostile environment
@@ -935,42 +976,42 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 
 IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCircuitUnit* unit)
 {
-	CBuilderManager* builderManager = circuit->GetBuilderManager();
-	if (!builderManager->CanEnqueueTask(64)) {
+	CBuilderManager* builderMgr = circuit->GetBuilderManager();
+	if (!builderMgr->CanEnqueueTask(64)) {
 		return nullptr;
 	}
 
 	/*
 	 * check air pads
 	 */
-	CFactoryManager* factoryManager = circuit->GetFactoryManager();
-	CMilitaryManager* militaryManager = circuit->GetMilitaryManager();
-	CCircuitDef* airpadDef = factoryManager->GetAirpadDef();
-	const std::set<IBuilderTask*> &factoryTasks = builderManager->GetTasks(IBuilderTask::BuildType::FACTORY);
+	CFactoryManager* factoryMgr = circuit->GetFactoryManager();
+	CMilitaryManager* militaryMgr = circuit->GetMilitaryManager();
+	CCircuitDef* airpadDef = factoryMgr->GetAirpadDef();
+	const std::set<IBuilderTask*> &factoryTasks = builderMgr->GetTasks(IBuilderTask::BuildType::FACTORY);
 	const unsigned airpadFactor = SQUARE((airpadDef->GetCount() + factoryTasks.size()) * 4);
 	const int frame = circuit->GetLastFrame();
 	if (airpadDef->IsAvailable(frame) &&
-		(militaryManager->GetRoleUnits(ROLE_TYPE(BOMBER)).size() > airpadFactor))
+		(militaryMgr->GetRoleUnits(ROLE_TYPE(BOMBER)).size() > airpadFactor))
 	{
 		CCircuitDef* bdef;
 		AIFloat3 buildPos;
 		if (unit == nullptr) {
 			bdef = airpadDef;
-			buildPos = factoryManager->GetClosestHaven(circuit->GetSetupManager()->GetBasePos());
+			buildPos = factoryMgr->GetClosestHaven(circuit->GetSetupManager()->GetBasePos());
 		} else {
 			bdef = unit->GetCircuitDef();
-			buildPos = factoryManager->GetClosestHaven(unit);
+			buildPos = factoryMgr->GetClosestHaven(unit);
 		}
 		if (!utils::is_valid(buildPos)) {
 			buildPos = circuit->GetSetupManager()->GetBasePos();
 		}
-		CTerrainManager* terrainManager = circuit->GetTerrainManager();
-		buildPos = terrainManager->GetBuildPosition(bdef, buildPos);
+		CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+		buildPos = terrainMgr->GetBuildPosition(bdef, buildPos);
 
-		if (terrainManager->CanBeBuiltAtSafe(airpadDef, buildPos) &&
-			((unit == nullptr) || terrainManager->CanBuildAtSafe(unit, buildPos)))
+		if (terrainMgr->CanBeBuiltAtSafe(airpadDef, buildPos) &&
+			((unit == nullptr) || terrainMgr->CanBuildAtSafe(unit, buildPos)))
 		{
-			return builderManager->EnqueueFactory(IBuilderTask::Priority::NORMAL, airpadDef, buildPos);
+			return builderMgr->EnqueueFactory(IBuilderTask::Priority::NORMAL, airpadDef, buildPos);
 		}
 	}
 
@@ -978,10 +1019,10 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 	 * check buildpower
 	 */
 	const float metalIncome = std::min(GetAvgMetalIncome(), GetAvgEnergyIncome())/* * ecoFactor*/;
-	CCircuitDef* assistDef = factoryManager->GetAssistDef();
+	CCircuitDef* assistDef = factoryMgr->GetAssistDef();
 	const float factoryFactor = (metalIncome - assistDef->GetBuildSpeed()) * 1.2f;
-	const int nanoSize = builderManager->GetTasks(IBuilderTask::BuildType::NANO).size();
-	const float factoryPower = factoryManager->GetFactoryPower() + nanoSize * assistDef->GetBuildSpeed();
+	const int nanoSize = builderMgr->GetTasks(IBuilderTask::BuildType::NANO).size();
+	const float factoryPower = factoryMgr->GetFactoryPower() + nanoSize * assistDef->GetBuildSpeed();
 	const bool isSwitchTime = (lastFacFrame + switchTime <= frame);
 	if ((factoryPower >= factoryFactor) && !isSwitchTime) {
 		return nullptr;
@@ -991,7 +1032,7 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 	 * check nanos
 	 */
 	if (!isSwitchTime) {
-		CCircuitUnit* factory = factoryManager->NeedUpgrade();
+		CCircuitUnit* factory = factoryMgr->NeedUpgrade();
 		if ((factory != nullptr) && assistDef->IsAvailable(frame)) {
 			AIFloat3 buildPos = factory->GetPos(frame);
 			switch (factory->GetUnit()->GetBuildingFacing()) {
@@ -1010,16 +1051,16 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 					break;
 			}
 
-			CTerrainManager* terrainManager = circuit->GetTerrainManager();
+			CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 			CCircuitDef* bdef = (unit == nullptr) ? factory->GetCircuitDef() : unit->GetCircuitDef();
 			CTerrainManager::CorrectPosition(buildPos);
-			buildPos = terrainManager->GetBuildPosition(bdef, buildPos);
+			buildPos = terrainMgr->GetBuildPosition(bdef, buildPos);
 
-			if (terrainManager->CanBeBuiltAtSafe(assistDef, buildPos) &&
-				((unit == nullptr) || terrainManager->CanBuildAtSafe(unit, buildPos)))
+			if (terrainMgr->CanBeBuiltAtSafe(assistDef, buildPos) &&
+				((unit == nullptr) || terrainMgr->CanBuildAtSafe(unit, buildPos)))
 			{
-				return builderManager->EnqueueTask(IBuilderTask::Priority::HIGH, assistDef, buildPos,
-												   IBuilderTask::BuildType::NANO, SQUARE_SIZE * 8, true);
+				return builderMgr->EnqueueTask(IBuilderTask::Priority::HIGH, assistDef, buildPos,
+											   IBuilderTask::BuildType::NANO, SQUARE_SIZE * 8, true);
 			}
 		}
 	}
@@ -1032,7 +1073,7 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 	}
 
 	const AIFloat3& enemyPos = circuit->GetEnemyManager()->GetEnemyPos();
-	const bool isStart = (factoryManager->GetFactoryCount() == 0);
+	const bool isStart = (factoryMgr->GetFactoryCount() == 0);
 	AIFloat3 buildPos;
 	if (isStart) {
 		buildPos = circuit->GetSetupManager()->GetBasePos();
@@ -1063,7 +1104,7 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 		buildPos = clusters[index].position;
 	}
 
-	CCircuitDef* facDef = factoryManager->GetFactoryToBuild(buildPos, isStart);
+	CCircuitDef* facDef = factoryMgr->GetFactoryToBuild(buildPos, isStart);
 	if (facDef == nullptr) {
 		return nullptr;
 	}
@@ -1080,17 +1121,17 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 	// identify area to build by factory representatives
 	CTerrainManager* terrainManager = circuit->GetTerrainManager();
 	CCircuitDef* bdef;
-	CCircuitDef* landDef = factoryManager->GetLandDef(facDef);
+	CCircuitDef* landDef = factoryMgr->GetLandDef(facDef);
 	if (landDef != nullptr) {
 		if (landDef->GetMobileId() < 0) {
 			bdef = landDef;
 		} else {
 			STerrainMapArea* area = terrainManager->GetMobileTypeById(landDef->GetMobileId())->areaLargest;
 			// FIXME: area->percentOfMap < 40.0 doesn't seem right as water identifier
-			bdef = ((area == nullptr) || (area->percentOfMap < 40.0)) ? factoryManager->GetWaterDef(facDef) : landDef;
+			bdef = ((area == nullptr) || (area->percentOfMap < 40.0)) ? factoryMgr->GetWaterDef(facDef) : landDef;
 		}
 	} else {
-		bdef = factoryManager->GetWaterDef(facDef);
+		bdef = factoryMgr->GetWaterDef(facDef);
 	}
 	if (bdef == nullptr) {
 		return nullptr;
@@ -1103,10 +1144,10 @@ IBuilderTask* CEconomyManager::UpdateFactoryTasks(const AIFloat3& position, CCir
 		((unit == nullptr) || terrainManager->CanBuildAtSafe(unit, buildPos)))
 	{
 		lastFacFrame = frame;
-		IBuilderTask::Priority priority = (builderManager->GetWorkerCount() <= 2) ?
+		IBuilderTask::Priority priority = (builderMgr->GetWorkerCount() <= 2) ?
 										  IBuilderTask::Priority::NOW :
 										  IBuilderTask::Priority::HIGH;
-		return builderManager->EnqueueFactory(priority, facDef, buildPos);
+		return builderMgr->EnqueueFactory(priority, facDef, buildPos);
 	}
 
 	return nullptr;

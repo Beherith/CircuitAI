@@ -131,7 +131,7 @@ void CMetalManager::ParseMetalSpots()
 			inc = 1;
 			spots.reserve(spotsPos.size());
 		}
-		CCircuitDef* mexDef = circuit->GetEconomyManager()->GetMexDef();
+		CCircuitDef* mexDef = circuit->GetEconomyManager()->GetSideInfo().mexDef;
 		CTerrainManager* terrainManager = circuit->GetTerrainManager();
 		const int xsize = mexDef->GetDef()->GetXSize();
 		const int zsize = mexDef->GetDef()->GetZSize();
@@ -235,13 +235,13 @@ void CMetalManager::MarkAllyMexes()
 	}
 
 	circuit->UpdateFriendlyUnits();
-	CCircuitDef* mexDef = circuit->GetEconomyManager()->GetMexDef();
+	const auto& allMexDefs = circuit->GetEconomyManager()->GetAllMexDefs();
 	const CAllyTeam::AllyUnits& friendlies = circuit->GetFriendlyUnits();
 	static std::vector<CAllyUnit*> tmpMexes;  // NOTE: micro-opt
 //	tmpMexes.reserve(friendlies.size());
 	for (auto& kv : friendlies) {
 		CAllyUnit* unit = kv.second;
-		if (*unit->GetCircuitDef() == *mexDef) {
+		if (allMexDefs.find(unit->GetCircuitDef()->GetId()) != allMexDefs.end()) {
 			tmpMexes.push_back(unit);
 		}
 	}

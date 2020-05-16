@@ -24,23 +24,46 @@
 	//   6) if nothing selected then build highest energy according to income.
 	"energy": {
 		// If land area >= 40% of the map then "land" config used, "water" otherwise
-		"land": {
-			// "<energy_def>": [<lower limit>, <upper limit>]
-			// limit = random(<lower limit>..<upper limit>)
-			"armfus": [2],
-			"armadvsol": [6, 10],
-			"armsolar": [10, 20]
-		},
-		"water": {
-			"armadvsol": [1],
-			"armsolar": [4],
-			"armwin": [20]
+		"side": {
+			"arm": {
+				"land": {
+					// "<energy_def>": [<lower limit>, <upper limit>]
+					// limit = random(<lower limit>..<upper limit>)
+					"armfus": [2],
+					"armadvsol": [6, 10],
+					"armsolar": [10, 20]
+				},
+				"water": {
+					"armadvsol": [1],
+					"armsolar": [4],
+					"armwin": [20]
+				}
+			},
+			"core": {
+				"land": {
+					// "<energy_def>": [<lower limit>, <upper limit>]
+					// limit = random(<lower limit>..<upper limit>)
+					"corfus": [2],
+					"coradvsol": [6, 10],
+					"corsolar": [10, 20]
+				},
+				"water": {
+					"coradvsol": [1],
+					"corsolar": [4],
+					"corwin": [20]
+				}
+			}
 		},
 		// income factor for energy, time is in seconds
 		// [[<start_factor>, <start_time>], [<end_factor>, <end_time>]]
 		"factor": [[0.15, 1], [7.0, 3600]],
 
 		"pylon": []
+	},
+
+	"metal": {
+		"arm": "armmex",
+		"core": "cormex"
 	},
 
 	// Scales metal income
@@ -67,6 +90,9 @@
 	"airpad": "armasp",
 
 	// Unknown UnitDef replacer
-	"default": "armwin"
+	"default": {
+		"arm": "armwin",
+		"core": "corwin"
+	}
 }
 }

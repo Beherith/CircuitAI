@@ -173,8 +173,7 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 	/*
 	 * staticmex handlers;
 	 */
-	CCircuitDef::Id unitDefId = circuit->GetEconomyManager()->GetMexDef()->GetId();
-	destroyedHandler[unitDefId] = [this](CCircuitUnit* unit, CEnemyInfo* attacker) {
+	auto mexDestroyedHandler = [this](CCircuitUnit* unit, CEnemyInfo* attacker) {
 		const AIFloat3& pos = unit->GetPos(this->circuit->GetLastFrame());
 		CCircuitDef* mexDef = unit->GetCircuitDef();
 		const int facing = unit->GetUnit()->GetBuildingFacing();
@@ -199,6 +198,9 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 			}
 		}), FRAMES_PER_SEC * 20);
 	};
+	for (const CEconomyManager::SSideInfo& si : circuit->GetEconomyManager()->GetSideInfos()) {
+		destroyedHandler[si.mexDef->GetId()] = mexDestroyedHandler;
+	}
 
 	ReadConfig();
 
@@ -231,7 +233,7 @@ void CBuilderManager::ReadConfig()
 
 	terraDef = circuit->GetCircuitDef(root["economy"].get("terra", "").asCString());
 	if (terraDef == nullptr) {
-		terraDef = circuit->GetEconomyManager()->GetDefaultDef();
+		terraDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}
 
 	const Json::Value& cond = root["porcupine"]["condition"];
@@ -782,19 +784,29 @@ void CBuilderManager::DequeueTask(IUnitTask* task, bool done)
 	task->Stop(done);
 }
 
-bool CBuilderManager::IsBuilderInArea(CCircuitDef* buildDef, const AIFloat3& position)
+bool CBuilderManager::IsBuilderInArea(CCircuitDef* buildDef, const AIFloat3& position) const
 {
 	if (!utils::is_valid(position)) {  // any-area task
 		return true;
 	}
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
-	for (auto& kv : buildAreas) {
-		for (auto& kvw : kv.second) {
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+	for (const auto& kv : buildAreas) {
+		for (const auto& kvw : kv.second) {
 			if ((kvw.second > 0) && kvw.first->CanBuild(buildDef) &&
-				terrainManager->CanMobileBuildAt(kv.first, kvw.first, position))
+				terrainMgr->CanMobileBuildAt(kv.first, kvw.first, position))
 			{
 				return true;
 			}
+		}
+	}
+	return false;
+}
+
+bool CBuilderManager::IsBuilderExists(CCircuitDef* buildDef) const
+{
+	for (const CCircuitUnit* builder : workers) {
+		if (builder->GetCircuitDef()->CanBuild(buildDef->GetId())) {
+			return true;
 		}
 	}
 	return false;
@@ -1105,36 +1117,36 @@ IBuilderTask* CBuilderManager::MakeBuilderTask(CCircuitUnit* unit, const CQueryC
 
 IBuilderTask* CBuilderManager::CreateBuilderTask(const AIFloat3& position, CCircuitUnit* unit)
 {
-	CEconomyManager* em = circuit->GetEconomyManager();
-	IBuilderTask* task = em->UpdateEnergyTasks(position, unit);
+	CEconomyManager* ecoMgr = circuit->GetEconomyManager();
+	IBuilderTask* task = ecoMgr->UpdateEnergyTasks(position, unit);
 	if (task != nullptr) {
 		return task;
 	}
-	task = em->UpdateReclaimTasks(position, unit, false);
+	task = ecoMgr->UpdateReclaimTasks(position, unit, false);
 //	if (task != nullptr) {
 //		return task;
 //	}
 
 	// FIXME: Eco rules. It should never get here
 	CCircuitDef* buildDef/* = nullptr*/;
-	const float metalIncome = std::min(em->GetAvgMetalIncome(), em->GetAvgEnergyIncome()) * em->GetEcoFactor();
+	const float metalIncome = std::min(ecoMgr->GetAvgMetalIncome(), ecoMgr->GetAvgEnergyIncome()) * ecoMgr->GetEcoFactor();
 	if (metalIncome < super.minIncome) {
 		float energyMake;
-		buildDef = em->GetLowEnergy(position, energyMake);
+		buildDef = ecoMgr->GetLowEnergy(position, energyMake);
 		if (buildDef == nullptr) {  // position can be in danger
-			buildDef = em->GetDefaultDef();
+			buildDef = ecoMgr->GetDefaultDef(unit->GetCircuitDef());
 		}
 		if ((buildDef->GetCount() < 10) && buildDef->IsAvailable(circuit->GetLastFrame())) {
 			return EnqueueTask(IBuilderTask::Priority::NORMAL, buildDef, position, IBuilderTask::BuildType::ENERGY);
 		}
 	} else {
-		CMilitaryManager* militaryManager = circuit->GetMilitaryManager();
-		buildDef = militaryManager->GetBigGunDef();
+		CMilitaryManager* militaryMgr = circuit->GetMilitaryManager();
+		buildDef = militaryMgr->GetBigGunDef();
 		if ((buildDef != nullptr) && (buildDef->GetCost() < super.maxTime * metalIncome)) {
 			const std::set<IBuilderTask*>& tasks = GetTasks(IBuilderTask::BuildType::BIG_GUN);
 			if (tasks.empty()) {
-				if (buildDef->IsAvailable(circuit->GetLastFrame()) && militaryManager->IsNeedBigGun(buildDef)) {
-					AIFloat3 pos = militaryManager->GetBigGunPos(buildDef);
+				if (buildDef->IsAvailable(circuit->GetLastFrame()) && militaryMgr->IsNeedBigGun(buildDef)) {
+					AIFloat3 pos = militaryMgr->GetBigGunPos(buildDef);
 					return EnqueueTask(IBuilderTask::Priority::NORMAL, buildDef, pos,
 									   IBuilderTask::BuildType::BIG_GUN);
 				}

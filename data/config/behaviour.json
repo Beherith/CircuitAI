@@ -37,6 +37,10 @@
 		"role": ["builder"],
 		"attribute": ["commander"]
 	},
+	"corcom": {
+		"role": ["builder"],
+		"attribute": ["commander"]
+	},
 	// kbot - armlab
 	"armck": {
 		// "role": [<main>, <enemy>, <enemy>, ...]
@@ -172,6 +176,87 @@
 	"armavp": {
 		"role": ["static"],
 		"attribute": ["support"]
+	},
+
+	// kbot - corlab
+	"corck": {
+		"role": ["builder"]
+	},
+	"corak": {
+		"role": ["raider"],
+		"attribute": ["scout"]
+	},
+	"cornecro": {
+		"role": ["support", "mine"]
+	},
+	"corstorm": {
+		"role": ["skirmish"]
+	},
+	"corthud": {
+		"role": ["assault"]
+	},
+	"corcrash": {
+		"role": ["anti_air"]
+	},
+
+	// adv kbot - coralab
+	"corack": {
+		"role": ["builder"]
+	},
+	"corfast": {
+		"role": ["raider"]
+	},
+	"corpyro": {
+		"role": ["assault"]
+	},
+	"corsumo": {
+		"role": ["assault"]
+	},
+
+	// vehicles - corvp
+	"corcv": {
+		"role": ["builder"]
+	},
+	"cormuskrat": {
+		"role": ["support", "mine"]
+	},
+	"cormlv": {
+		"role": ["support", "mine"]
+	},
+	"corfav": {
+		"role": ["scout"]
+	},
+	"corgator": {
+		"role": ["assault"]
+	},
+	"corgarp": {
+		"role": ["assault"]
+	},
+	"corraid": {
+		"role": ["raider"]
+	},
+	"corlevlr": {
+		"role": ["riot"]
+	},
+	"corwolv": {
+		"role": ["artillery"]
+	},
+	"cormist": {
+		"role": ["anti_air"]
+	},
+
+	// adv vehicles - coravp
+	"coracv": {
+		"role": ["builder"]
+	},
+	"correap": {
+		"role": ["assault"]
+	},
+	"corgol": {
+		"role": ["assault"]
+	},
+	"cormart": {
+		"role": ["artillery"]
 	}
 }
 }

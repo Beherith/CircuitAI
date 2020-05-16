@@ -11,12 +11,12 @@ IUnitTask@ MakeTask(CCircuitUnit@ unit)
 //	lastPos = unit.GetPos(ai.GetLastFrame());
 //	aiAddPoint(lastPos, "task");
 
-//	IUnitTask@ task = builderMgr.DefaultMakeTask(unit);
+//	IUnitTask@ task = aiBuilderMgr.DefaultMakeTask(unit);
 //	if ((task !is null) && (task.GetType() == 5)) {  // Type::BUILDER
 //		aiAddPoint(task.GetPos(), "task");
 //	}
 //	return task;
-	return builderMgr.DefaultMakeTask(unit);
+	return aiBuilderMgr.DefaultMakeTask(unit);
 }
 
 }  // namespace Builder

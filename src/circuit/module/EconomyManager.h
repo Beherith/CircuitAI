@@ -33,6 +33,10 @@ class CEnergyGrid;
 class CEconomyManager: public IModule {
 public:
 	friend class CEconomyScript;
+	struct SSideInfo {
+		CCircuitDef* mexDef;
+		CCircuitDef* defaultDef;
+	};
 
 	CEconomyManager(CCircuitAI* circuit);
 	virtual ~CEconomyManager();
@@ -50,13 +54,17 @@ public:
 	springai::Resource* GetMetalRes() const { return metalRes; }
 	springai::Resource* GetEnergyRes() const { return energyRes; }
 	CEnergyGrid* GetEnergyGrid() const { return energyGrid; }
-	CCircuitDef* GetMexDef() const { return mexDef; }
+	CCircuitDef* GetMexDef(CCircuitDef* builderDef) { return mexDefs[builderDef->GetId()]; }
 	CCircuitDef* GetLowEnergy(const springai::AIFloat3& pos, float& outMake) const;
 	CCircuitDef* GetPylonDef() const { return pylonDef; }
 	float GetPylonRange() const { return pylonRange; }
 	void AddEnergyDefs(const std::set<CCircuitDef*>& buildDefs);  // add available energy defs
 	void RemoveEnergyDefs(const std::set<CCircuitDef*>& buildDefs);
-	CCircuitDef* GetDefaultDef() const { return defaultDef; }
+	CCircuitDef* GetDefaultDef(CCircuitDef* builderDef) { return defaultDefs[builderDef->GetId()]; }
+
+	const SSideInfo& GetSideInfo() const;
+	const std::vector<SSideInfo>& GetSideInfos() const { return sideInfos; }
+	const std::unordered_set<CCircuitDef::Id>& GetAllMexDefs() const { return allMexDefs; }
 
 	void UpdateResourceIncome();
 	float GetAvgMetalIncome() const { return metalIncome; }
@@ -115,9 +123,12 @@ private:
 	float pylonRange;
 	CCircuitDef* pylonDef;  // TODO: Move into CEnergyGrid?
 
-	CCircuitDef* mexDef;
+	std::vector<SSideInfo> sideInfos;
+	std::unordered_set<CCircuitDef::Id> allMexDefs;
+
+	std::unordered_map<CCircuitDef::Id, CCircuitDef*> mexDefs;  // builder: mex
 	CCircuitDef* storeDef;
-	CCircuitDef* defaultDef;
+	std::unordered_map<CCircuitDef::Id, CCircuitDef*> defaultDefs;  // builder: mex
 
 	// NOTE: MetalManager::SetOpenSpot used by whole allyTeam. Therefore
 	//       local spot's state descriptor needed for better expansion
@@ -135,7 +146,8 @@ private:
 		bool operator==(const CCircuitDef* d) { return cdef == d; }
 	};
 	std::vector<SEnergyInfo> energyInfos;
-	CLagrangeInterPol* engyPol;
+	// FIXME: Move into SSideInfo
+	std::vector<CLagrangeInterPol*> engyPols;  // 1 for each side
 
 	float ecoStep;
 	float ecoFactor;

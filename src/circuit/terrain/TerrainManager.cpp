@@ -238,7 +238,7 @@ void CTerrainManager::ReadConfig()
 	};
 
 	for (const std::string& clName : instance.getMemberNames()) {
-		Json::Value cls = isWaterMap ? clWater[clName] : Json::Value::null;
+		Json::Value cls = isWaterMap ? clWater[clName] : Json::Value::nullSingleton();
 		if (cls.empty()) {
 			cls = clLand[clName];
 			if (cls.empty()) {
@@ -280,7 +280,7 @@ void CTerrainManager::ReadConfig()
 void CTerrainManager::Init()
 {
 	const CMetalData::Metals& spots = circuit->GetMetalManager()->GetSpots();
-	CCircuitDef* mexDef = circuit->GetEconomyManager()->GetMexDef();
+	CCircuitDef* mexDef = circuit->GetEconomyManager()->GetSideInfo().mexDef;
 	int xsize, zsize;
 	auto it = blockInfos.find(mexDef->GetId());
 	if (it != blockInfos.end()) {
@@ -447,7 +447,7 @@ void CTerrainManager::MarkAllyBuildings()
 	circuit->UpdateFriendlyUnits();
 	const CAllyTeam::AllyUnits& friendlies = circuit->GetFriendlyUnits();
 	int teamId = circuit->GetTeamId();
-	CCircuitDef* mexDef = circuit->GetEconomyManager()->GetMexDef();
+	const auto& allMexDefs = circuit->GetEconomyManager()->GetAllMexDefs();
 
 	decltype(markedAllies) prevUnits = std::move(markedAllies);
 	markedAllies.clear();
@@ -456,19 +456,19 @@ void CTerrainManager::MarkAllyBuildings()
 	auto first2  = prevUnits.begin();
 	auto last2   = prevUnits.end();
 	auto d_first = std::back_inserter(markedAllies);
-	auto addStructure = [&d_first, mexDef, this](CAllyUnit* unit) {
+	auto addStructure = [&d_first, &allMexDefs, this](CAllyUnit* unit) {
 		SStructure building;
 		building.unitId = unit->GetId();
 		building.cdef = unit->GetCircuitDef();
 		building.pos = unit->GetPos(this->circuit->GetLastFrame());
 		building.facing = unit->GetUnit()->GetBuildingFacing();
 		*d_first++ = building;
-		if (*building.cdef != *mexDef) {
+		if (allMexDefs.find(building.cdef->GetId()) == allMexDefs.end()) {
 			MarkBlocker(building, true);
 		}
 	};
-	auto delStructure = [mexDef, this](const SStructure& building) {
-		if (*building.cdef != *mexDef) {
+	auto delStructure = [&allMexDefs, this](const SStructure& building) {
+		if (allMexDefs.find(building.cdef->GetId()) == allMexDefs.end()) {
 			MarkBlocker(building, false);
 		}
 	};
