@@ -233,11 +233,14 @@ public:
 	bool IsLoadSave() const { return isLoadSave; }
 	CGameAttribute* GetGameAttribute() const { return gameAttribute.get(); }
 	const std::shared_ptr<CScheduler>& GetScheduler() { return scheduler; }
-	int      GetLastFrame()    const { return lastFrame; }
-	int      GetSkirmishAIId() const { return skirmishAIId; }
-	int      GetTeamId()       const { return teamId; }
-	int      GetAllyTeamId()   const { return allyTeamId; }
-	SideType GetTeamSide()     const { return teamSide; }
+	int GetLastFrame()    const { return lastFrame; }
+	int GetSkirmishAIId() const { return skirmishAIId; }
+	int GetTeamId()       const { return teamId; }
+	int GetAllyTeamId()   const { return allyTeamId; }
+
+	SideType GetTeamSide() const { return teamSide; }
+	const std::string& GetTeamSideName() const { return teamSideName; }
+
 	COOAICallback*        GetCallback()   const { return callback.get(); }
 	CEngine*              GetEngine()     const { return engine.get(); }
 	springai::Cheats*     GetCheats()     const { return cheats.get(); }
@@ -281,6 +284,7 @@ private:
 	int teamId;
 	int allyTeamId;
 	SideType teamSide;
+	std::string teamSideName;
 	std::unique_ptr<COOAICallback>        callback;
 	std::unique_ptr<CEngine>              engine;
 	std::unique_ptr<springai::Cheats>     cheats;

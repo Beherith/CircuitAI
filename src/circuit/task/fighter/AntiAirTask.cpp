@@ -143,7 +143,7 @@ void CAntiAirTask::Update()
 	bool isExecute = (updCount % 4 == 2);
 	if (!isExecute) {
 		for (CCircuitUnit* unit : units) {
-			isExecute |= unit->IsForceExecute(frame);
+			isExecute |= unit->IsForceUpdate(frame);
 		}
 		if (!isExecute) {
 			if (wasRegroup && !pPath->posPath.empty()) {

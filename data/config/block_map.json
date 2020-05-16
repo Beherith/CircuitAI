@@ -121,7 +121,7 @@
 		"mex": ["armmex", "cormex"],
 		"def_low": ["armllt", "corllt"],
 		"caretaker": ["armnanotc", "armasp", "cornanotc", "corasp"],
-		"small": ["armrad"]
+		"small": ["armrad", "corrad"]
 	}
 }
 }

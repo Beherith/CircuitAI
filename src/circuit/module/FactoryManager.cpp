@@ -223,8 +223,7 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 		}
 	}
 	// FIXME: BA
-	const char* nanoName = std::string("core") == circuit->GetGame()->GetTeamSide(circuit->GetTeamSide())
-					? "cornanotc" : "armnanotc";
+	const char* nanoName = circuit->GetTeamSideName() == "core" ? "cornanotc" : "armnanotc";
 	assistDef = circuit->GetCircuitDef(nanoName);
 	CCircuitDef::Id unitDefId = assistDef->GetId();
 	createdHandler[unitDefId] = assistCreatedHandler;
@@ -255,7 +254,9 @@ void CFactoryManager::ReadConfig()
 	const Json::Value& root = circuit->GetSetupManager()->GetConfig();
 	const std::string& cfgName = circuit->GetSetupManager()->GetConfigName();
 
-	airpadDef = circuit->GetCircuitDef(root["economy"].get("airpad", "").asCString());
+	const Json::Value& airpad = root["economy"]["airpad"];
+	const std::string& padName = airpad.get(circuit->GetTeamSideName(), "").asString();
+	airpadDef = circuit->GetCircuitDef(padName.c_str());
 	if (airpadDef == nullptr) {
 		airpadDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}

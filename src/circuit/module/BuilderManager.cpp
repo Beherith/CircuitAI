@@ -236,7 +236,7 @@ void CBuilderManager::ReadConfig()
 		terraDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}
 
-	const Json::Value& cond = root["porcupine"]["condition"];
+	const Json::Value& cond = root["porcupine"]["superweapon"]["condition"];
 	super.minIncome = cond.get((unsigned)0, 50.f).asFloat();
 	super.maxTime = cond.get((unsigned)1, 300.f).asFloat();
 

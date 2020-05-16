@@ -548,7 +548,11 @@ int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICall
 
 	script = new CInitScript(GetScriptManager(), this);
 	script->Init();
-	teamSide = gameAttribute->GetSideMasker().GetType(game->GetTeamSide(teamId));
+	teamSideName = game->GetTeamSide(teamId);
+	if (teamSideName.empty()) {
+		teamSideName = "arm";
+	}
+	teamSide = gameAttribute->GetSideMasker().GetType(teamSideName);
 
 	std::string cfgOption = InitOptions();  // Inits GameAttribute
 	InitWeaponDefs();
@@ -1043,7 +1047,7 @@ int CCircuitAI::EnemyEnterLOS(CEnemyInfo* enemy)
 		}
 		CCircuitUnit* unit = GetTeamUnit(fId);
 		if ((unit != nullptr) && (unit->GetTask() != nullptr)) {
-			unit->ForceExecute(lastFrame + THREAT_UPDATE_RATE);
+			unit->ForceUpdate(lastFrame + THREAT_UPDATE_RATE);
 		}
 	}
 

@@ -332,7 +332,7 @@ void CMilitaryManager::ReadConfig()
 	defenceMod.len = qthrDef.get((unsigned)1, 1.f).asFloat() - defenceMod.min;
 
 	const Json::Value& porc = root["porcupine"];
-	const Json::Value& defs = porc["unit"];
+	const Json::Value& defs = porc["unit"][circuit->GetTeamSideName()];
 	defenderDefs.reserve(defs.size());
 	for (const Json::Value& def : defs) {
 		CCircuitDef* cdef = circuit->GetCircuitDef(def.asCString());
@@ -391,7 +391,7 @@ void CMilitaryManager::ReadConfig()
 	std::sort(baseDefence.begin(), baseDefence.end(), compare);
 
 	const Json::Value& super = porc["superweapon"];
-	const Json::Value& items = super["unit"];
+	const Json::Value& items = super["unit"][circuit->GetTeamSideName()];
 	const Json::Value& probs = super["weight"];
 	superInfos.reserve(items.size());
 	for (unsigned i = 0; i < items.size(); ++i) {
@@ -409,7 +409,8 @@ void CMilitaryManager::ReadConfig()
 	}
 	DiceBigGun();
 
-	defaultPorc = circuit->GetCircuitDef(porc.get("default", "").asCString());
+	const std::string& defName = porc["default"].get(circuit->GetTeamSideName(), "").asString();
+	defaultPorc = circuit->GetCircuitDef(defName.c_str());
 	if (defaultPorc == nullptr) {
 		defaultPorc = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}

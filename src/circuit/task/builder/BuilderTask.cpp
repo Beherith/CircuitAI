@@ -122,6 +122,11 @@ void IBuilderTask::Start(CCircuitUnit* unit)
 
 void IBuilderTask::Update()
 {
+	for (CCircuitUnit* unit : traveled) {
+		Execute(unit);
+	}
+	traveled.clear();
+
 	CCircuitUnit* unit = GetNextAssignee();
 	if (unit == nullptr) {
 		return;
@@ -281,7 +286,7 @@ void IBuilderTask::OnUnitDestroyed(CCircuitUnit* unit, CEnemyInfo* attacker)
 
 void IBuilderTask::OnTravelEnd(CCircuitUnit* unit)
 {
-	Execute(unit);
+	traveled.insert(unit);
 }
 
 void IBuilderTask::Activate()
@@ -435,7 +440,7 @@ bool IBuilderTask::Reevaluate(CCircuitUnit* unit)
 void IBuilderTask::UpdatePath(CCircuitUnit* unit)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
-	// TODO: Check IsForceExecute, shield charge and retreat
+	// TODO: Check IsForceUpdate, shield charge and retreat
 
 	const AIFloat3& endPos = GetPosition();
 	if (!circuit->GetTerrainManager()->CanBuildAtSafe(unit, endPos)) {

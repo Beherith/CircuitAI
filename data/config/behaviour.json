@@ -152,7 +152,8 @@
 		"attribute": ["ret_fight"]
 	},
 	"armsam": {
-		"role": ["anti_air"]
+		"role": ["anti_air"],
+		"attribute": ["skirmish"]
 	},
 
 	// adv vehicles - armavp
@@ -203,7 +204,7 @@
 	"corack": {
 		"role": ["builder"]
 	},
-	"corfast": {
+	"cortermite": {
 		"role": ["raider"]
 	},
 	"corpyro": {
@@ -227,13 +228,14 @@
 		"role": ["scout"]
 	},
 	"corgator": {
-		"role": ["assault"]
+		"role": ["raider"],
+		"attribute": ["scout"]
 	},
 	"corgarp": {
 		"role": ["assault"]
 	},
 	"corraid": {
-		"role": ["raider"]
+		"role": ["assault"]
 	},
 	"corlevlr": {
 		"role": ["riot"]
@@ -242,7 +244,8 @@
 		"role": ["artillery"]
 	},
 	"cormist": {
-		"role": ["anti_air"]
+		"role": ["anti_air"],
+		"attribute": ["skirmish"]
 	},
 
 	// adv vehicles - coravp

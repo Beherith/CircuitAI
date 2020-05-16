@@ -1,8 +1,11 @@
 // Mono-space font required
 {
 "porcupine": {
-	//        0         1            2
-	"unit": ["armllt", "armbeamer", "armhlt"],
+	//            0         1            2
+	"unit": {
+		"arm":  ["armllt", "armbeamer", "armhlt"],
+		"core": ["corllt", "corhllt",   "corhlt"]
+	},
 	// Actual number of defences per cluster bounded by income
 	"land":  [0, 1, 2],
 	"water": [0],
@@ -18,14 +21,20 @@
 	"base": [[1, 600], [2, 1200]],
 
 	"superweapon": {
-		"unit":   ["armsy"],
-		"weight": [ 1.00],
+		"unit": {
+			"arm":  ["armsy"],
+			"core": ["corsy"]
+		},
+		"weight":   [ 1.00],
 
 		"condition": [16, 2000]  // [<Minimum income>, <maximum seconds to build>]
 	},
 
 	// Fallback defence
-	"default": "armllt"
+	"default": {
+		"arm": "armllt",
+		"core": "corllt"
+	}
 },
 
 // Actions on building finished event
@@ -65,6 +74,12 @@
 					{"unit": "armllt", "category": "defence", "offset": [80, 80]}
 				]
 			]
+		},
+		"coradvsol": {
+			"hub": [
+				[{"unit": "corllt", "category": "defence", "offset": [-80, -80]}],  // chain1
+				[{"unit": "corllt", "category": "defence", "offset": [80, 80]}]  // chain2
+			]
 		}
 	}
 //	"factory": {
@@ -78,6 +93,10 @@
 	"mex": {
 		"armmex": {
 //			"terra": true,
+			"energy": [20, true],
+			"porc": true
+		},
+		"cormex": {
 			"energy": [20, true],
 			"porc": true
 		}

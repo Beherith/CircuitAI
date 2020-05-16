@@ -31,7 +31,7 @@
 					// limit = random(<lower limit>..<upper limit>)
 					"armfus": [2],
 					"armadvsol": [6, 10],
-					"armsolar": [10, 20]
+					"armsolar": [16, 20]
 				},
 				"water": {
 					"armadvsol": [1],
@@ -45,7 +45,7 @@
 					// limit = random(<lower limit>..<upper limit>)
 					"corfus": [2],
 					"coradvsol": [6, 10],
-					"corsolar": [10, 20]
+					"corsolar": [16, 20]
 				},
 				"water": {
 					"coradvsol": [1],
@@ -87,7 +87,10 @@
 	"switch": 9000,
 
 	"terra": "armsy",
-	"airpad": "armasp",
+	"airpad": {
+		"arm": "armasp",
+		"core": "corasp"
+	},
 
 	// Unknown UnitDef replacer
 	"default": {

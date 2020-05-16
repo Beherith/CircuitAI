@@ -43,14 +43,6 @@ private:
 	struct SScriptInfo {
 		asIScriptFunction* init = nullptr;
 	} info;
-
-	struct SCategory {
-		std::string air;
-		std::string land;
-		std::string water;
-		std::string bad;
-		std::string good;
-	} cat;
 };
 
 } // namespace circuit
