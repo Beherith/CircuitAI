@@ -48,6 +48,10 @@
 		// <enemy> is to decide how to counter enemy unit, if missing then equals to <main>
 		// Roles: builder, scout, raider, riot, assault, skirmish, artillery, anti_air, anti_sub, anti_heavy, bomber, support, mine, transport, air, sub, static, heavy, super, commander
 		// Auto-assigned roles: builder, air, static, super, commander
+		// raider: units grouped apart from others, tries to find weak spots.
+		// riot: regular attacker, but according to response.json it is built when enemy has many raiders (in plans to make riot just con's defender).
+		// assault: regular attacker, according to response.json it is built when enemy has many statics.
+		// skirmish: regular attacker, according to response.json it is built when enemy has many riots or assaults.
 		"role": ["builder"]
 
 		// Attributes - optinal states
@@ -86,10 +90,12 @@
 	},
 	"armpw": {
 		"role": ["raider"],
-		"attribute": ["scout"]
+		"attribute": ["scout"],
+		"pwr_mod": 0.5
 	},
 	"armrectr": {
-		"role": ["support", "mine"]
+		"role": ["support", "mine"],
+		"attribute": ["siege"]
 	},
 	"armrock": {
 		"role": ["skirmish"]
@@ -111,6 +117,9 @@
 	"armack": {
 		"role": ["builder"]
 	},
+	"armfark": {
+		"role": ["support", "mine"]
+	},
 	"armfast": {
 		"role": ["raider"]
 	},
@@ -118,8 +127,57 @@
 		"role": ["assault"]
 	},
 	"armfboy": {
-		"role": ["assault"]
+		"role": ["heavy"]
 	},
+	"armmav": {
+		"role": ["riot"],
+		"attribute": ["skirmish"]
+	},
+	"armfido": {
+		"role": ["artillery"],
+		"attribute": ["siege"]
+	},
+	"armvader": {
+		"role": ["assault"],
+		"attribute": ["melee"],
+		"retreat": 0,
+	},
+	"armaak": {
+		"role": ["anti_air"]
+	},
+	"armmark": {
+		"role": ["support"]
+	},
+	"armspid": {
+		"role": ["support"]
+	},
+	"armsptk": {
+		"role": ["artillery"],
+		"attribute": ["siege"]
+	},
+	"armsnipe": {
+		"role": ["anti_heavy"]
+	},
+
+	// T3 kbot - armshltx
+	"armmar": {
+		"role": ["raider", "heavy"],
+		"attribute": ["super"]
+	},
+	"armraz": {
+		"role": ["skirmish", "heavy"],
+		"attribute": ["super"]
+	},
+	"armvang": {
+		"role": ["artillery", "heavy"],
+		"attribute": ["super"]
+	},
+	"armbanth": {
+		"role": ["assault", "heavy"],
+		"attribute": ["super"],
+		"pwr_mod": 2.0
+	},
+
 
 	// vehicles - armvp
 	"armcv": {
@@ -167,7 +225,19 @@
 		"role": ["assault"]
 	},
 	"armmanni": {
+		"role": ["heavy"]
+	},
+	"armmart": {
 		"role": ["artillery"]
+	},
+	"armmerl": {
+		"role": ["artillery"]
+	},
+	"armyork": {
+		"role": ["anti_air"]
+	},
+	"armseer": {
+		"role": ["support"]
 	},
 
 	"armalab": {
@@ -185,10 +255,12 @@
 	},
 	"corak": {
 		"role": ["raider"],
-		"attribute": ["scout"]
+		"attribute": ["scout"],
+		"pwr_mod": 0.5
 	},
 	"cornecro": {
-		"role": ["support", "mine"]
+		"role": ["support", "mine"],
+		"attribute": ["siege"]
 	},
 	"corstorm": {
 		"role": ["skirmish"]
@@ -204,6 +276,9 @@
 	"corack": {
 		"role": ["builder"]
 	},
+	"corfast": {
+		"role": ["support", "mine"]
+	},
 	"cortermite": {
 		"role": ["raider"]
 	},
@@ -211,7 +286,52 @@
 		"role": ["assault"]
 	},
 	"corsumo": {
+		"role": ["heavy"]
+	},
+	"corcan": {
 		"role": ["assault"]
+	},
+	"cormort": {
+		"role": ["artillery"],
+		"attribute": ["skirmish"]
+	},
+	"corhrk": {
+		"role": ["bomber"]
+	},
+	"coraak": {
+		"role": ["anti_air"]
+	},
+	"cormando": {
+		"role": ["raider", "mine"]
+	},
+	"corsktl": {
+		"role": ["assault"],
+		"attribute": ["melee"],
+		"retreat": 0,
+	},
+
+	// T3 kbot - corgant
+	"corshiva": {
+		"role": ["riot", "heavy"],
+		"attribute": ["super"]
+	},
+	"corkarg": {
+		"role": ["raider", "heavy"],
+		"attribute": ["super"]
+	},
+	"corcat": {
+		"role": ["artillery", "heavy"],
+		"attribute": ["super"]
+	},
+	"corkrog": {
+		"role": ["assault", "heavy"],
+		"attribute": ["super"],
+		"pwr_mod": 2.0
+	},
+	"corjugg": {
+		"role": ["heavy"],
+		"attribute": ["super"],
+		"pwr_mod": 2.0
 	},
 
 	// vehicles - corvp
@@ -256,10 +376,25 @@
 		"role": ["assault"]
 	},
 	"corgol": {
-		"role": ["assault"]
+		"role": ["heavy"]
 	},
 	"cormart": {
 		"role": ["artillery"]
+	},
+	"corsent": {
+		"role": ["anti_air"]
+	},
+	"corvroc": {
+		"role": ["artillery"]
+	},
+	"corban": {
+		"role": ["raider"]
+	},
+	"cortrem": {
+		"role": ["heavy"]
+	},
+	"corvrad": {
+		"role": ["support"]
 	}
 }
 }

@@ -35,7 +35,7 @@
 		"fac_strider": {
 			"type": ["rectangle", "special"],
 			"offset": [0, 12],
-			"yard": [16, 16]
+			"yard": [20, 20]
 		},
 		"solar": {
 			"type": ["rectangle", "engy_low"],
@@ -115,10 +115,11 @@
 	},
 	"instance": {
 		"fac_land": ["armlab", "armalab", "armvp", "armavp", "corlab", "coralab", "corvp", "coravp"],
+		"fac_strider": ["armshltx", "corgant"],
 		"solar": ["armsolar", "corsolar"],
 		"wind": ["armwin", "corwin"],
 		"store": ["armmstor", "armestor", "cormstor", "corestor"],
-		"mex": ["armmex", "cormex"],
+		"mex": ["armmex", "armmoho", "cormex", "cormoho"],
 		"def_low": ["armllt", "corllt"],
 		"caretaker": ["armnanotc", "armasp", "cornanotc", "corasp"],
 		"small": ["armrad", "corrad"]
