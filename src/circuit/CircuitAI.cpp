@@ -60,10 +60,11 @@ namespace circuit {
 using namespace springai;
 
 #define ACTION_UPDATE_RATE	64
-#define RELEASE_CONFIG		100
-#define RELEASE_COMMANDER	101
-#define RELEASE_CORRUPTED	102
-#define RELEASE_RESIGN		103
+#define RELEASE_RESIGN		100
+#define RELEASE_SIDE		200
+#define RELEASE_CONFIG		201
+#define RELEASE_COMMANDER	202
+#define RELEASE_CORRUPTED	203
 #ifdef DEBUG
 	#define PRINT_TOPIC(txt, topic)	LOG("<CircuitAI> %s topic: %i, SkirmishAIId: %i", txt, topic, skirmishAIId)
 #else
@@ -90,7 +91,7 @@ CCircuitAI::CCircuitAI(OOAICallback* clb)
 		//       and lastFrame check will misbehave until first update event.
 		, lastFrame(-2)
 		, skirmishAIId(clb != nullptr ? clb->GetSkirmishAIId() : -1)
-		, teamSide(0)
+		, sideId(0)
 		, callback(std::unique_ptr<COOAICallback>(new COOAICallback(clb)))
 		, engine(nullptr)
 		, cheats(std::unique_ptr<Cheats>(clb->GetCheats()))
@@ -544,15 +545,14 @@ int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICall
 	CreateGameAttribute();
 	scheduler = std::make_shared<CScheduler>();
 	scheduler->Init(scheduler);
-	scriptManager = std::make_shared<CScriptManager>(this);
 
+	scriptManager = std::make_shared<CScriptManager>(this);
 	script = new CInitScript(GetScriptManager(), this);
-	script->Init();
-	teamSideName = game->GetTeamSide(teamId);
-	if (teamSideName.empty()) {
-		teamSideName = "arm";
+
+	if (!InitSide()) {
+		Release(RELEASE_SIDE);
+		return ERROR_INIT;
 	}
-	teamSide = gameAttribute->GetSideMasker().GetType(teamSideName);
 
 	std::string cfgOption = InitOptions();  // Inits GameAttribute
 	InitWeaponDefs();
@@ -594,8 +594,6 @@ int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICall
 	builderManager = std::make_shared<CBuilderManager>(this);
 	militaryManager = std::make_shared<CMilitaryManager>(this);
 
-//	InitKnownDefs(setupManager->GetCommChoice());
-
 	// TODO: Remove EconomyManager from module (move abilities to BuilderManager).
 	modules.push_back(militaryManager);
 	modules.push_back(builderManager);
@@ -603,6 +601,7 @@ int CCircuitAI::Init(int skirmishAIId, const struct SSkirmishAICallback* sAICall
 	modules.push_back(economyManager);  // NOTE: Units use manager, but ain't assigned here
 
 	script->RegisterMgr();
+	script->Init();
 	for (auto& module : modules) {
 		module->InitScript();
 	}
@@ -628,6 +627,14 @@ int CCircuitAI::Release(int reason)
 	economy = nullptr;
 	metalRes = energyRes = nullptr;
 
+	delete script;
+	utils::free_clear(weaponDefs);
+	for (auto& kv : defsById) {
+		delete kv.second;
+	}
+	defsById.clear();
+	defsByName.clear();
+
 	if (!isInitialized) {
 		return 0;
 	}
@@ -649,7 +656,6 @@ int CCircuitAI::Release(int reason)
 	scheduler = nullptr;
 
 	modules.clear();
-	delete script;
 	scriptManager = nullptr;
 	militaryManager = nullptr;
 	economyManager = nullptr;
@@ -680,12 +686,6 @@ int CCircuitAI::Release(int reason)
 	if (allyTeam != nullptr) {
 		allyTeam->Release();
 	}
-	for (auto& kv : defsById) {
-		delete kv.second;
-	}
-	defsById.clear();
-	defsByName.clear();
-	utils::free_clear(weaponDefs);
 
 	DestroyGameAttribute();
 
@@ -1164,6 +1164,19 @@ int CCircuitAI::LuaMessage(const char* inData)
 	return 0;  // signaling: OK
 }
 
+bool CCircuitAI::InitSide()
+{
+	sideName = game->GetTeamSide(teamId);
+	if (sideName.empty()) {
+		sideName = gameAttribute->GetSideMasker().GetName(0);
+		if (sideName.empty()) {
+			return false;
+		}
+	}
+	sideId = gameAttribute->GetSideMasker().GetType(sideName);
+	return true;
+}
+
 CCircuitUnit* CCircuitAI::GetOrRegTeamUnit(ICoreUnit::Id unitId)
 {
 	CCircuitUnit* unit = GetTeamUnit(unitId);
@@ -1445,31 +1458,6 @@ void CCircuitAI::InitUnitDefs(float& outDcr)
 		kv.second->Init(this);
 	}
 }
-
-//void CCircuitAI::InitKnownDefs(const CCircuitDef* commDef)
-//{
-//	std::set<CCircuitDef::Id> visited;
-//	std::queue<CCircuitDef::Id> queue;
-//
-//	queue.push(commDef->GetId());
-//
-//	while (!queue.empty()) {
-//		CCircuitDef* cdef = GetCircuitDef(queue.front());
-//		queue.pop();
-//
-//		visited.insert(cdef->GetId());
-//		for (CCircuitDef::Id child : cdef->GetBuildOptions()) {
-//			if (visited.find(child) == visited.end()) {
-//				queue.push(child);
-//			}
-//		}
-//	}
-//
-//	knownDefs.reserve(visited.size());
-//	for (CCircuitDef::Id id : visited) {
-//		knownDefs.push_back(GetCircuitDef(id));
-//	}
-//}
 
 //// debug
 //void CCircuitAI::DrawClusters()

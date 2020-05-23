@@ -139,6 +139,8 @@ private:
 	int Save(std::ostream& os);
 	int LuaMessage(const char* inData);
 
+	bool InitSide();
+
 // ---- Units ---- BEGIN
 public:
 	using Units = std::map<ICoreUnit::Id, CCircuitUnit*>;
@@ -209,13 +211,17 @@ public:
 	const CircuitDefs& GetCircuitDefs() const { return defsById; }
 	CCircuitDef* GetCircuitDef(const char* name);
 	CCircuitDef* GetCircuitDef(CCircuitDef::Id unitDefId);
-//	const std::vector<CCircuitDef*>& GetKnownDefs() const { return knownDefs; }
+	void BindRole(CCircuitDef::RoleT role, CCircuitDef::RoleT actAsRole) {
+		roleBind[role] = actAsRole;
+	}
+	CCircuitDef::RoleT GetBindedRole(CCircuitDef::RoleT role) const {
+		return roleBind[role];
+	}
 private:
 	void InitUnitDefs(float& outDcr);
-//	void InitKnownDefs(const CCircuitDef* commDef);
 	CircuitDefs defsById;  // owner
 	NamedDefs defsByName;
-//	std::vector<CCircuitDef*> knownDefs;
+	std::array<CCircuitDef::RoleT, CMaskHandler::GetMaxMasks()> roleBind;
 // ---- UnitDefs ---- END
 
 // ---- WeaponDefs ---- BEGIN
@@ -238,8 +244,8 @@ public:
 	int GetTeamId()       const { return teamId; }
 	int GetAllyTeamId()   const { return allyTeamId; }
 
-	SideType GetTeamSide() const { return teamSide; }
-	const std::string& GetTeamSideName() const { return teamSideName; }
+	SideType GetSideId() const { return sideId; }
+	const std::string& GetSideName() const { return sideName; }
 
 	COOAICallback*        GetCallback()   const { return callback.get(); }
 	CEngine*              GetEngine()     const { return engine.get(); }
@@ -283,8 +289,10 @@ private:
 	int skirmishAIId;
 	int teamId;
 	int allyTeamId;
-	SideType teamSide;
-	std::string teamSideName;
+
+	SideType sideId;
+	std::string sideName;
+
 	std::unique_ptr<COOAICallback>        callback;
 	std::unique_ptr<CEngine>              engine;
 	std::unique_ptr<springai::Cheats>     cheats;

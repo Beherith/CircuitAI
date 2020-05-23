@@ -127,8 +127,8 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 	 * heavy handlers
 	 */
 //	auto heavyCreatedHandler = [this](CCircuitUnit* unit, CCircuitUnit* builder) {
-//		CEconomyManager* economyManager = this->circuit->GetEconomyManager();
-//		if (economyManager->GetAvgMetalIncome() * economyManager->GetEcoFactor() > 32.0f) {
+//		CEconomyManager* economyMgr = this->circuit->GetEconomyManager();
+//		if (economyMgr->GetAvgMetalIncome() * economyMgr->GetEcoFactor() > 32.0f) {
 //			TRY_UNIT(this->circuit, unit,
 //				unit->CmdPriority(2);
 //			)
@@ -139,7 +139,7 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 	const Json::Value& root = circuit->GetSetupManager()->GetConfig();
 	const float builderRet = root["retreat"].get("builder", 0.8f).asFloat();
 
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	const CCircuitAI::CircuitDefs& allDefs = circuit->GetCircuitDefs();
 	for (auto& kv : allDefs) {
 		CCircuitDef::Id unitDefId = kv.first;
@@ -152,7 +152,7 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 				damagedHandler[unitDefId]   = workerDamagedHandler;
 				destroyedHandler[unitDefId] = workerDestroyedHandler;
 
-				int mtId = terrainManager->GetMobileTypeId(unitDefId);
+				int mtId = terrainMgr->GetMobileTypeId(unitDefId);
 				if (mtId >= 0) {  // not air
 					workerMobileTypes.insert(mtId);
 				}
@@ -207,7 +207,7 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 	buildTasks.resize(static_cast<IBuilderTask::BT>(IBuilderTask::BuildType::_SIZE_));
 
 	for (auto mtId : workerMobileTypes) {
-		for (auto& area : terrainManager->GetMobileTypeById(mtId)->area) {
+		for (auto& area : terrainMgr->GetMobileTypeById(mtId)->area) {
 			buildAreas[&area] = std::map<CCircuitDef*, int>();
 		}
 	}
@@ -389,11 +389,11 @@ int CBuilderManager::UnitCreated(CCircuitUnit* unit, CCircuitUnit* builder)
 	}
 
 	if (builder == nullptr) {
-		CTerrainManager* terrainManager = circuit->GetTerrainManager();
-		if (!unit->GetCircuitDef()->IsMobile() && !terrainManager->ResignAllyBuilding(unit)) {
+		CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+		if (!unit->GetCircuitDef()->IsMobile() && !terrainMgr->ResignAllyBuilding(unit)) {
 			// enemy unit captured
 			const AIFloat3& pos = unit->GetPos(circuit->GetLastFrame());
-			terrainManager->AddBlocker(unit->GetCircuitDef(), pos, unit->GetUnit()->GetBuildingFacing());
+			terrainMgr->AddBlocker(unit->GetCircuitDef(), pos, unit->GetUnit()->GetBuildingFacing());
 		}
 		return 0; //signaling: OK
 	}
@@ -858,6 +858,14 @@ IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
 	const int frame = circuit->GetLastFrame();
 	const AIFloat3& pos = unit->GetPos(frame);
 
+	const CCircuitDef* cdef = unit->GetCircuitDef();
+	if ((cdef->GetPower() > THREAT_MIN)
+		&& (pos.SqDistance2D(circuit->GetSetupManager()->GetBasePos()) < SQUARE(circuit->GetMilitaryManager()->GetBaseDefRange()))
+		&& circuit->GetEnemyManager()->IsEnemyNear(pos, threatMap->GetUnitThreat(unit) * 1.5f))
+	{
+		return EnqueueCombat(1.5f);
+	}
+
 	const auto it = costQueries.find(unit);
 	std::shared_ptr<IPathQuery> query = (it == costQueries.end()) ? nullptr : it->second;
 	if ((query != nullptr) && (query->GetState() != IPathQuery::State::READY)) {  // not ready
@@ -875,19 +883,9 @@ IUnitTask* CBuilderManager::DefaultMakeTask(CCircuitUnit* unit)
 
 	std::shared_ptr<CQueryCostMap> pQuery = std::static_pointer_cast<CQueryCostMap>(query);
 
-	const CCircuitDef* cdef = unit->GetCircuitDef();
 	if (cdef->IsRoleComm()) {  // hide commander?
-		// FIXME: Any combat builder, not only commander
-		CSetupManager* setupMgr = circuit->GetSetupManager();
 		CEnemyManager* enemyMgr = circuit->GetEnemyManager();
-		CMilitaryManager* militaryMgr = circuit->GetMilitaryManager();
-		if ((pos.SqDistance2D(setupMgr->GetBasePos()) < SQUARE(militaryMgr->GetBaseDefRange()))
-			&& enemyMgr->IsEnemyNear(pos, threatMap->GetUnitThreat(unit) * 1.5f))
-		{
-			return EnqueueCombat(1.5f);
-		}
-
-		const CSetupManager::SCommInfo::SHide* hide = setupMgr->GetHide(cdef);
+		const CSetupManager::SCommInfo::SHide* hide = circuit->GetSetupManager()->GetHide(cdef);
 		if (hide != nullptr) {
 			if ((frame < hide->frame) || (GetWorkerCount() <= 2)) {
 				return MakeBuilderTask(unit, pQuery.get());
@@ -911,11 +909,11 @@ IBuilderTask* CBuilderManager::MakeCommTask(CCircuitUnit* unit, const CQueryCost
 	const int frame = circuit->GetLastFrame();
 	AIFloat3 pos = unit->GetPos(frame);
 
-	CEconomyManager* economyManager = circuit->GetEconomyManager();
-	economyManager->MakeEconomyTasks(pos, unit);
-	const bool isNotReady = !economyManager->IsExcessed();
+	CEconomyManager* economyMgr = circuit->GetEconomyManager();
+	economyMgr->MakeEconomyTasks(pos, unit);
+	const bool isNotReady = !economyMgr->IsExcessed();
 
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CInfluenceMap* inflMap = circuit->GetInflMap();
 	CPathFinder* pathfinder = circuit->GetPathfinder();
 //	CTerrainManager::CorrectPosition(pos);
@@ -939,30 +937,29 @@ IBuilderTask* CBuilderManager::MakeCommTask(CCircuitUnit* unit, const CQueryCost
 			const AIFloat3& bp = candidate->GetPosition();
 			AIFloat3 buildPos = utils::is_valid(bp) ? bp : pos;
 
-			float distCost;
 			if (candidate->GetPriority() == IBuilderTask::Priority::NOW) {
 				// Disregard safety
-				if (!terrainManager->CanBuildAt(unit, buildPos)) {  // ensure that path always exists
+				if (!terrainMgr->CanBuildAt(unit, buildPos)) {  // ensure that path always exists
 					continue;
-				}
-
-				distCost = query->GetCostAt(buildPos, buildDistance);
-				if (distCost < 0.f) {  // path blocked by buildings
-					distCost = pos.SqDistance2D(buildPos);
 				}
 
 			} else {
 
 				if ((basePos.SqDistance2D(buildPos) > sqMaxBaseRange)
-					|| !terrainManager->CanBuildAtSafe(unit, buildPos)  // ensure that path always exists
+					|| !terrainMgr->CanBuildAtSafe(unit, buildPos)  // ensure that path always exists
 					|| (inflMap->GetInfluenceAt(buildPos) < -INFL_EPS))  // safety check
 				{
 					continue;
 				}
+			}
 
+			float distCost;
+			const float rawDist = pos.SqDistance2D(buildPos);
+			if (rawDist < buildDistance) {
+				distCost = rawDist / pathfinder->GetSquareSize() * COST_BASE;
+			} else {
 				distCost = query->GetCostAt(buildPos, buildDistance);
 				if (distCost < 0.f) {  // path blocked by buildings
-					distCost = pos.SqDistance2D(buildPos);
 					continue;
 				}
 			}
@@ -1013,17 +1010,17 @@ IBuilderTask* CBuilderManager::MakeBuilderTask(CCircuitUnit* unit, const CQueryC
 	const int frame = circuit->GetLastFrame();
 	AIFloat3 pos = unit->GetPos(frame);
 
-	CEconomyManager* economyManager = circuit->GetEconomyManager();
-	task = economyManager->MakeEconomyTasks(pos, unit);
+	CEconomyManager* economyMgr = circuit->GetEconomyManager();
+	task = economyMgr->MakeEconomyTasks(pos, unit);
 //	if (task != nullptr) {
 //		return task;
 //	}
-	const bool isStalling = economyManager->IsMetalEmpty() &&
-							(economyManager->GetAvgMetalIncome() * 1.2f < economyManager->GetMetalPull()) &&
-							(metalPull > economyManager->GetPullMtoS() * circuit->GetFactoryManager()->GetMetalPull());
-	const bool isNotReady = !economyManager->IsExcessed() || isStalling;
+	const bool isStalling = economyMgr->IsMetalEmpty() &&
+							(economyMgr->GetAvgMetalIncome() * 1.2f < economyMgr->GetMetalPull()) &&
+							(metalPull > economyMgr->GetPullMtoS() * circuit->GetFactoryManager()->GetMetalPull());
+	const bool isNotReady = !economyMgr->IsExcessed() || isStalling;
 
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CInfluenceMap* inflMap = circuit->GetInflMap();
 	CPathFinder* pathfinder = circuit->GetPathfinder();
 //	CTerrainManager::CorrectPosition(pos);
@@ -1039,7 +1036,7 @@ IBuilderTask* CBuilderManager::MakeBuilderTask(CCircuitUnit* unit, const CQueryC
 				|| (isNotReady
 					&& (candidate->GetPriority() != IBuilderTask::Priority::NOW)
 					&& (candidate->GetBuildDef() != nullptr)
-					&& !economyManager->IsIgnoreStallingPull(candidate)))
+					&& !economyMgr->IsIgnoreStallingPull(candidate)))
 			{
 				continue;
 			}
@@ -1048,32 +1045,31 @@ IBuilderTask* CBuilderManager::MakeBuilderTask(CCircuitUnit* unit, const CQueryC
 			const AIFloat3& bp = candidate->GetPosition();
 			AIFloat3 buildPos = utils::is_valid(bp) ? bp : pos;
 
-			float distCost;
-			if (candidate->GetPriority() >= IBuilderTask::Priority::HIGH) {
+			if (candidate->GetPriority() == IBuilderTask::Priority::NOW) {
 				// Disregard safety
-				if (!terrainManager->CanBuildAt(unit, buildPos)) {  // ensure that path always exists
+				if (!terrainMgr->CanBuildAt(unit, buildPos)) {  // ensure that path always exists
 					continue;
-				}
-
-				distCost = query->GetCostAt(buildPos, buildDistance);
-				if (distCost < 0.f) {  // path blocked by buildings
-					distCost = pos.SqDistance2D(buildPos);
 				}
 
 			} else {
 
 				CCircuitDef* buildDef = candidate->GetBuildDef();
 				const float buildThreat = (buildDef != nullptr) ? buildDef->GetPower() : 0.f;
-				if ((threatMap->GetThreatAt(buildPos) > maxThreat + buildThreat)
-					|| !terrainManager->CanBuildAt(unit, buildPos)  // ensure that path always exists
-					|| (inflMap->GetInfluenceAt(buildPos) < -INFL_EPS))  // safety check
+				if (!terrainMgr->CanBuildAt(unit, buildPos)  // ensure that path always exists
+					|| (((buildThreat < THREAT_MIN) && (threatMap->GetThreatAt(buildPos) > maxThreat))
+						&& (inflMap->GetInfluenceAt(buildPos) < -INFL_EPS)))  // safety check
 				{
 					continue;
 				}
+			}
 
+			float distCost;
+			const float rawDist = pos.SqDistance2D(buildPos);
+			if (rawDist < buildDistance) {
+				distCost = rawDist / pathfinder->GetSquareSize() * COST_BASE;
+			} else {
 				distCost = query->GetCostAt(buildPos, buildDistance);
 				if (distCost < 0.f) {  // path blocked by buildings
-					distCost = pos.SqDistance2D(buildPos);
 					continue;
 				}
 			}
@@ -1136,7 +1132,7 @@ IBuilderTask* CBuilderManager::CreateBuilderTask(const AIFloat3& position, CCirc
 		if (buildDef == nullptr) {  // position can be in danger
 			buildDef = ecoMgr->GetDefaultDef(unit->GetCircuitDef());
 		}
-		if ((buildDef->GetCount() < 10) && buildDef->IsAvailable(circuit->GetLastFrame())) {
+		if ((buildDef != nullptr) && (buildDef->GetCount() < 10) && buildDef->IsAvailable(circuit->GetLastFrame())) {
 			return EnqueueTask(IBuilderTask::Priority::NORMAL, buildDef, position, IBuilderTask::BuildType::ENERGY);
 		}
 	} else {
@@ -1210,8 +1206,8 @@ void CBuilderManager::RemoveBuildList(CCircuitUnit* unit)
 void CBuilderManager::Watchdog()
 {
 	SCOPED_TIME(circuit, __PRETTY_FUNCTION__);
-	CEconomyManager* economyManager = circuit->GetEconomyManager();
-	Resource* metalRes = economyManager->GetMetalRes();
+	CEconomyManager* economyMgr = circuit->GetEconomyManager();
+	Resource* metalRes = economyMgr->GetMetalRes();
 	// somehow workers get stuck
 	for (CCircuitUnit* worker : workers) {
 		if (worker->GetTask()->GetType() == IUnitTask::Type::PLAYER) {
@@ -1227,7 +1223,7 @@ void CBuilderManager::Watchdog()
 	}
 
 	// find unfinished abandoned buildings
-	float maxCost = MAX_BUILD_SEC * std::min(economyManager->GetAvgMetalIncome(), buildPower) * economyManager->GetEcoFactor();
+	float maxCost = MAX_BUILD_SEC * std::min(economyMgr->GetAvgMetalIncome(), buildPower) * economyMgr->GetEcoFactor();
 	// TODO: Include special units
 	for (auto& kv : circuit->GetTeamUnits()) {
 		CCircuitUnit* unit = kv.second;
@@ -1292,10 +1288,10 @@ void CBuilderManager::UpdateBuild()
 
 void CBuilderManager::UpdateAreaUsers()
 {
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	buildAreas.clear();
 	for (auto mtId : workerMobileTypes) {
-		for (auto& area : terrainManager->GetMobileTypeById(mtId)->area) {
+		for (auto& area : terrainMgr->GetMobileTypeById(mtId)->area) {
 			buildAreas[&area] = std::map<CCircuitDef*, int>();
 		}
 	}

@@ -224,11 +224,11 @@ void CRaidTask::OnUnitIdle(CCircuitUnit* unit)
 	CCircuitAI* circuit = manager->GetCircuit();
 	const float maxDist = std::max<float>(lowestRange, circuit->GetPathfinder()->GetSquareSize());
 	if (position.SqDistance2D(leader->GetPos(circuit->GetLastFrame())) < SQUARE(maxDist)) {
-		CTerrainManager* terrainManager = circuit->GetTerrainManager();
-		float x = rand() % terrainManager->GetTerrainWidth();
-		float z = rand() % terrainManager->GetTerrainHeight();
+		CTerrainManager* terrainMgr = circuit->GetTerrainManager();
+		float x = rand() % terrainMgr->GetTerrainWidth();
+		float z = rand() % terrainMgr->GetTerrainHeight();
 		position = AIFloat3(x, circuit->GetMap()->GetElevationAt(x, z), z);
-		position = terrainManager->GetMovePosition(leader->GetArea(), position);
+		position = terrainMgr->GetMovePosition(leader->GetArea(), position);
 	}
 
 	if (units.find(unit) != units.end()) {
@@ -240,7 +240,7 @@ bool CRaidTask::FindTarget()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	CMap* map = circuit->GetMap();
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CThreatMap* threatMap = circuit->GetThreatMap();
 	CInfluenceMap* inflMap = circuit->GetInflMap();
 	STerrainMapArea* area = leader->GetArea();
@@ -280,18 +280,18 @@ bool CRaidTask::FindTarget()
 		const AIFloat3& ePos = enemy->GetPos();
 		const bool isEnemyUrgent = isDefender && (inflMap->GetAllyDefendInflAt(ePos) > INFL_EPS);
 		if ((!isEnemyUrgent && !urgentPositions.empty())
-			|| !terrainManager->CanMoveToPos(area, ePos))
+			|| !terrainMgr->CanMoveToPos(area, ePos))
 		{
 			continue;
 		}
 
-		const float sqEBDist = basePos.SqDistance2D(ePos);
+//		const float sqEBDist = basePos.SqDistance2D(ePos);
 		float checkPower = maxPower;
 		float checkSpeed = maxSpeed;
-		if (sqEBDist < sqBaseRange) {
-			checkPower *= 2.0f - 1.0f / baseRange * sqrtf(sqEBDist);  // 200% near base
-			checkSpeed *= 2.f;
-		}
+//		if (sqEBDist < sqBaseRange) {
+//			checkPower *= 2.0f - 1.0f / baseRange * sqrtf(sqEBDist);  // 200% near base
+//			checkSpeed *= 2.f;
+//		}
 		const float power = threatMap->GetThreatAt(ePos);
 		if (checkPower <= power) {
 			continue;
@@ -389,7 +389,7 @@ void CRaidTask::FallbackRaid()
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	const int frame = circuit->GetLastFrame();
-	CTerrainManager* terrainManager = circuit->GetTerrainManager();
+	CTerrainManager* terrainMgr = circuit->GetTerrainManager();
 	CThreatMap* threatMap = circuit->GetThreatMap();
 	const AIFloat3& pos = leader->GetPos(frame);
 	const AIFloat3& threatPos = leader->GetTravelAct()->IsActive() ? position : pos;
@@ -398,10 +398,10 @@ void CRaidTask::FallbackRaid()
 	}
 
 	if (!utils::is_valid(position)) {
-		float x = rand() % terrainManager->GetTerrainWidth();
-		float z = rand() % terrainManager->GetTerrainHeight();
+		float x = rand() % terrainMgr->GetTerrainWidth();
+		float z = rand() % terrainMgr->GetTerrainHeight();
 		position = AIFloat3(x, circuit->GetMap()->GetElevationAt(x, z), z);
-		position = terrainManager->GetMovePosition(leader->GetArea(), position);
+		position = terrainMgr->GetMovePosition(leader->GetArea(), position);
 	}
 
 	CPathFinder* pathfinder = circuit->GetPathfinder();

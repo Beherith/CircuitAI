@@ -45,6 +45,8 @@ public:
 
 	static Mask GetMask(Type type) { return (1 << type); }
 
+	std::string GetName(Type type) const;
+
 	/**
 	 * Returns the masks bit-field value.
 	 * @return the masks bit-field value or 0,

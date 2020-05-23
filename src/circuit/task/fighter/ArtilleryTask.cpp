@@ -272,10 +272,10 @@ void CArtilleryTask::FallbackBasePos(CCircuitUnit* unit, bool isUpdating)
 {
 	CCircuitAI* circuit = manager->GetCircuit();
 	const int frame = circuit->GetLastFrame();
-	CSetupManager* setupManager = circuit->GetSetupManager();
+	CSetupManager* setupMgr = circuit->GetSetupManager();
 
 	const AIFloat3& startPos = unit->GetPos(frame);
-	position = setupManager->GetBasePos();
+	position = setupMgr->GetBasePos();
 	const float pathRange = DEFAULT_SLACK * 4;  // pathfinder->GetSquareSize()
 
 	CPathFinder* pathfinder = circuit->GetPathfinder();

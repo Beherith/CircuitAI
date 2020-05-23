@@ -91,7 +91,8 @@ CInitScript::CInitScript(CScriptManager* scr, CCircuitAI* ai)
 	r = engine->RegisterObjectBehaviour("IUnitTask", asBEHAVE_RELEASE, "void f()", asMETHODPR(IRefCounter, Release, (), int), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("IUnitTask", "int GetRefCount()", asMETHODPR(IRefCounter, GetRefCount, (), int), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("IUnitTask", "int GetType()", asMETHODPR(IUnitTask, GetType, () const, IUnitTask::Type), asCALL_THISCALL); ASSERT(r >= 0);
-	r = engine->RegisterObjectMethod("IUnitTask", "const AIFloat3& GetPos()", asMETHODPR(IBuilderTask, GetPosition, () const, const AIFloat3&), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("IUnitTask", "int GetBuildType()", asMETHODPR(IBuilderTask, GetBuildType, () const, IBuilderTask::BuildType), asCALL_THISCALL); ASSERT(r >= 0);
+	r = engine->RegisterObjectMethod("IUnitTask", "const AIFloat3& GetBuildPos()", asMETHODPR(IBuilderTask, GetPosition, () const, const AIFloat3&), asCALL_THISCALL); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectMethod("CCircuitAI", "int GetLastFrame() const", asMETHOD(CCircuitAI, GetLastFrame), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitAI", "CCircuitDef@ GetCircuitDef(const string& in)", asFUNCTION(CCircuitAI_GetCircuitDef), asCALL_CDECL_OBJFIRST); ASSERT(r >= 0);
@@ -111,6 +112,8 @@ CInitScript::CInitScript(CScriptManager* scr, CCircuitAI* ai)
 	r = engine->RegisterGlobalProperty("CMaskHandler aiRoleMasker", roleMasker); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CMaskHandler", "TypeMask GetTypeMask(const string& in)", asMETHOD(CMaskHandler, GetTypeMask), asCALL_THISCALL); ASSERT(r >= 0);
 
+	r = engine->RegisterGlobalFunction("TypeMask aiAddRole(const string& in, Type)", asMETHOD(CInitScript, AddRole), asCALL_THISCALL_ASGLOBAL, this); ASSERT(r >= 0);
+
 	r = engine->RegisterTypedef("Id", "int"); ASSERT(r >= 0);
 
 	r = engine->RegisterObjectMethod("CCircuitDef", "bool IsRoleAny(Mask) const", asMETHOD(CCircuitDef, IsRoleAny), asCALL_THISCALL); ASSERT(r >= 0);
@@ -121,6 +124,8 @@ CInitScript::CInitScript(CScriptManager* scr, CCircuitAI* ai)
 	r = engine->RegisterObjectMethod("CCircuitUnit", "Id GetId() const", asMETHODPR(CCircuitUnit, GetId, () const, ICoreUnit::Id), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitUnit", "CCircuitDef@ GetCircuitDef() const", asMETHODPR(CCircuitUnit, GetCircuitDef, () const, CCircuitDef*), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CCircuitUnit", "const AIFloat3& GetPos(int)", asMETHODPR(CCircuitUnit, GetPos, (int), const AIFloat3&), asCALL_THISCALL); ASSERT(r >= 0);
+
+	InitConfig();
 }
 
 CInitScript::~CInitScript()
@@ -129,42 +134,7 @@ CInitScript::~CInitScript()
 
 void CInitScript::Init()
 {
-	script->Load("init", "init.as");
-	asIScriptModule* mod = script->GetEngine()->GetModule("init");
-	int r = mod->SetDefaultNamespace("Init"); ASSERT(r >= 0);
-	info.init = script->GetFunc(mod, "void Init(dictionary@)");
-
-	if (info.init == nullptr) {
-		return;
-	}
-
-	CScriptDictionary* dict = CScriptDictionary::Create(script->GetEngine());
-
-	asIScriptContext* ctx = script->PrepareContext(info.init);
-	ctx->SetArgObject(0, dict);
-	script->Exec(ctx);  // side, role
-	script->ReturnContext(ctx);
-
-	CScriptDictionary* catDict;
-	if (dict->Get("category", &catDict, dict->GetTypeId("category"))) {
-		Game* game = circuit->GetGame();
-		std::array<std::pair<std::string, int*>, 5> cats = {
-			std::make_pair("air",   &circuit->airCategory),
-			std::make_pair("land",  &circuit->landCategory),
-			std::make_pair("water", &circuit->waterCategory),
-			std::make_pair("bad",   &circuit->badCategory),
-			std::make_pair("good",  &circuit->goodCategory)
-		};
-		for (const auto& kv : cats) {
-			std::string value;
-			if (catDict->Get(kv.first, &value, catDict->GetTypeId(kv.first))) {
-				*kv.second = game->GetCategoriesFlag(value.c_str());
-			}
-		}
-	}
-	catDict->Release();
-
-	dict->Release();
+	script->Load("main", "main.as");
 }
 
 void CInitScript::RegisterMgr()
@@ -188,6 +158,59 @@ void CInitScript::RegisterMgr()
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetEnemyThreat(Type) const", asMETHODPR(CEnemyManager, GetEnemyThreat, (CCircuitDef::RoleT) const, float), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetMobileThreat() const", asMETHOD(CEnemyManager, GetMobileThreat), asCALL_THISCALL); ASSERT(r >= 0);
 	r = engine->RegisterObjectMethod("CEnemyManager", "float GetEnemyCost(Type) const", asMETHOD(CEnemyManager, GetEnemyCost), asCALL_THISCALL); ASSERT(r >= 0);
+}
+
+void CInitScript::InitConfig()
+{
+	if (!script->Load("init", "init.as")) {
+		return;
+	}
+	asIScriptModule* mod = script->GetEngine()->GetModule("init");
+	int r = mod->SetDefaultNamespace("Init"); ASSERT(r >= 0);
+	asIScriptFunction* init = script->GetFunc(mod, "void Init(dictionary@)");
+	if (init == nullptr) {
+		return;
+	}
+
+	CScriptDictionary* dict = CScriptDictionary::Create(script->GetEngine());
+
+	asIScriptContext* ctx = script->PrepareContext(init);
+	ctx->SetArgObject(0, dict);
+	script->Exec(ctx);
+	script->ReturnContext(ctx);
+
+	CScriptDictionary* catDict;
+	if (dict->Get("category", &catDict, dict->GetTypeId("category"))) {
+		Game* game = circuit->GetGame();
+		std::array<std::pair<std::string, int*>, 5> cats = {
+			std::make_pair("air",   &circuit->airCategory),
+			std::make_pair("land",  &circuit->landCategory),
+			std::make_pair("water", &circuit->waterCategory),
+			std::make_pair("bad",   &circuit->badCategory),
+			std::make_pair("good",  &circuit->goodCategory)
+		};
+		for (const auto& kv : cats) {
+			std::string value;
+			if (catDict->Get(kv.first, &value, catDict->GetTypeId(kv.first))) {
+				*kv.second = game->GetCategoriesFlag(value.c_str());
+			}
+		}
+	}
+	catDict->Release();
+
+	dict->Release();
+
+	mod->Discard();
+}
+
+CMaskHandler::TypeMask CInitScript::AddRole(const std::string& name, int actAsRole)
+{
+	CMaskHandler::TypeMask result = circuit->GetGameAttribute()->GetRoleMasker().GetTypeMask(name);
+	if (result.type < 0) {
+		return result;
+	}
+	circuit->BindRole(result.type, actAsRole);
+	return result;
 }
 
 void CInitScript::Log(const std::string& msg) const

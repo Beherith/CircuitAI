@@ -447,7 +447,6 @@ void CTerrainManager::MarkAllyBuildings()
 	circuit->UpdateFriendlyUnits();
 	const CAllyTeam::AllyUnits& friendlies = circuit->GetFriendlyUnits();
 	int teamId = circuit->GetTeamId();
-	const auto& allMexDefs = circuit->GetEconomyManager()->GetAllMexDefs();
 
 	decltype(markedAllies) prevUnits = std::move(markedAllies);
 	markedAllies.clear();
@@ -456,19 +455,19 @@ void CTerrainManager::MarkAllyBuildings()
 	auto first2  = prevUnits.begin();
 	auto last2   = prevUnits.end();
 	auto d_first = std::back_inserter(markedAllies);
-	auto addStructure = [&d_first, &allMexDefs, this](CAllyUnit* unit) {
+	auto addStructure = [&d_first, this](CAllyUnit* unit) {
 		SStructure building;
 		building.unitId = unit->GetId();
 		building.cdef = unit->GetCircuitDef();
 		building.pos = unit->GetPos(this->circuit->GetLastFrame());
 		building.facing = unit->GetUnit()->GetBuildingFacing();
 		*d_first++ = building;
-		if (allMexDefs.find(building.cdef->GetId()) == allMexDefs.end()) {
+		if (!building.cdef->IsMex()) {
 			MarkBlocker(building, true);
 		}
 	};
-	auto delStructure = [&allMexDefs, this](const SStructure& building) {
-		if (allMexDefs.find(building.cdef->GetId()) == allMexDefs.end()) {
+	auto delStructure = [this](const SStructure& building) {
+		if (!building.cdef->IsMex()) {
 			MarkBlocker(building, false);
 		}
 	};
