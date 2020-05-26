@@ -5,13 +5,13 @@
 	"raid": [3.0, 9.0],  // [<min>, <avg>] power of raider squad
 	"attack": 60.0,  // min power of attack group
 	"thr_mod": {
-		"attack": [0.9, 0.95],  // [<min>, <max>] enemy threat modifier for target selection of attack task
+		"attack": [0.4, 0.5],  // [<min>, <max>] enemy threat modifier for target selection of attack task
 		"defence": [0.95, 0.95],  // [<min>, <max>] enemy threat modifier for group size calculation of defence task
 		"mobile": 1.1,  // initial modifier for power of attack group based on mobile enemy threat
 		"static": 1.5,  // initial modifier for power of attack group based on static enemy threat
 		"comm": 0.01
 	},
-	"aa_threat": 80.0,  // anti-air threat threshold, air factories will stop production when AA threat exceeds
+	"aa_threat": 250.0,  // anti-air threat threshold, air factories will stop production when AA threat exceeds
 	"slack_mod": {
 		"all": 0.5,  // threat map 64-elmos slack multiplier for all units
 		"static": 1.0,  // additional 64-elmo-cells for static units
@@ -41,6 +41,58 @@
 		"role": ["builder"],
 		"attribute": ["commander"]
 	},
+	
+	// ARM defenses
+	"armllt": {
+		"role": ["static"]
+	},
+	"armrl": {
+		"role": ["anti_air"],
+		"attribute": ["anti_air"]
+	},
+	"armcir": {
+		"role": ["anti_air"]
+	},
+	"armpacko": {
+		"role": ["anti_air"]
+	},
+	"armflak": {
+		"role": ["anti_air"],
+		"attribute": ["heavy"]
+	},
+	"armtl": {
+		"role": ["static"]
+	},
+	"armatl": {
+		"role": ["static"],
+		"attribute": ["heavy"]
+	},
+
+	// CORE defenses
+	"corllt": {
+		"role": ["static"]
+	},		
+	"corrl": {
+		"role": ["anti_air"]
+	},
+	"cormadsam": {
+		"role": ["anti_air"]
+	},
+	"corerad": {
+		"role": ["anti_air"]
+	},
+	"corflak": {
+		"role": ["anti_air"],
+		"attribute": ["heavy"]
+	},
+	"cortl": {
+		"role": ["static"]
+	},
+	"coratl": {
+		"role": ["static"],
+		"attribute": ["heavy"]
+	},
+
 	// kbot - armlab
 	"armck": {
 		// "role": [<main>, <enemy>, <enemy>, ...]
@@ -91,7 +143,7 @@
 	"armpw": {
 		"role": ["raider"],
 		"attribute": ["scout"],
-		"pwr_mod": 0.5
+		"pwr_mod": 2
 	},
 	"armrectr": {
 		"role": ["support", "mine"],
@@ -107,7 +159,8 @@
 		"role": ["anti_air"]
 	},
 	"armwar": {
-		"role": ["assault"]
+		"role": ["riot"],
+		"attribute": ["skirmish"]
 	},
 	"armflea": {
 		"role": ["scout"]
@@ -197,7 +250,7 @@
 		"attribute": ["scout"]
 	},
 	"armpincer": {
-		"role": ["support", "mine"]
+		"role": ["assault"]
 	},
 	"armstump": {
 		"role": ["assault"]
@@ -225,7 +278,8 @@
 		"role": ["assault"]
 	},
 	"armmanni": {
-		"role": ["heavy"]
+		"role": ["anti_heavy"],
+		"attribute": ["artillery"]
 	},
 	"armmart": {
 		"role": ["artillery"]
@@ -249,6 +303,117 @@
 		"attribute": ["support"]
 	},
 
+	// aircraft - armap
+	"armca": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"armpeep": {
+		"role": ["scout", "air"]
+	},
+	"armfig": {
+		"role": ["anti_air", "air"]
+	},
+	"armthund": {
+		"role": ["bomber", "air"]
+	},
+	"armkam": {
+		"role": ["raider", "air"],
+		"attribute": ["siege"],
+		"retreat": 0.6
+	},
+
+	// adv aircraft - armaap
+	"armaca": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"armawac": {
+		"role": ["scout", "air"]
+	},
+	"armhawk": {
+		"role": ["anti_air", "air"]
+	},
+	"armpnix": {
+		"role": ["bomber", "air"]
+	},
+	"armbrawl": {
+		"role": ["raider", "air"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+	"armblade": {
+		"role": ["heavy", "air"],
+		"retreat": 0.4
+	},
+	"armstil": {
+		"role": ["bomber", "air"],
+	},
+	"armliche": {
+		"role": ["bomber", "air"],
+		"attribute": ["heavy"],
+		"retreat": 0.5
+	},
+
+	// ships - armsy
+	"armcs": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"armpt": {
+		"role": ["scout", "anti_air", "raider"]
+	},
+	"armdecade": {
+		"role": ["scout", "raider", "skirmish"]
+	},
+	"armpship": {
+		"role": ["assault", "skirmish"]
+	},
+	"armsub": {
+		"role": ["sub"],
+		"attribute": ["anti_sub"]
+	},
+	"armroy": {
+		"role": ["artillery", "assault"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+
+	// adv shipyard - armasy
+	"armacsub": {
+		"role": ["builder", "sub"],
+		"retreat": 0.3
+	},
+	"armsubk": {
+		"role": ["sub"],
+		"attribute": ["anti_sub"]
+	},
+	"armaas": {
+		"role": ["anti_air"]
+	},
+	"armcrus": {
+		"role": ["assault", "skirmish"],
+		"attribute": ["anti_sub"]
+	},
+	"armcarry": {
+		"role": ["support", "heavy"],
+		"retreat": 0.75
+	},
+	"armmship": {
+		"role": ["artillery"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+	"armbats": {
+		"role": ["heavy"],
+		"attribute": ["assault"],
+	},
+	"armepoch": {
+		"role": ["heavy"],
+		"attribute": ["artillery"],
+		"retreat": 0.3
+	},
+
 	// kbot - corlab
 	"corck": {
 		"role": ["builder"]
@@ -256,7 +421,7 @@
 	"corak": {
 		"role": ["raider"],
 		"attribute": ["scout"],
-		"pwr_mod": 0.5
+		"pwr_mod": 2
 	},
 	"cornecro": {
 		"role": ["support", "mine"],
@@ -395,6 +560,110 @@
 	},
 	"corvrad": {
 		"role": ["support"]
+	},
+
+	// ships - corsy
+	"corcs": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"corpt": {
+		"role": ["scout", "anti_air", "raider"]
+	},
+	"coresupp": {
+		"role": ["scout", "raider", "skirmish"]
+	},
+	"corpship": {
+		"role": ["assault", "skirmish"]
+	},
+	"corsub": {
+		"role": ["sub"],
+		"attribute": ["anti_sub"]
+	},
+	"corroy": {
+		"role": ["artillery", "assault"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+
+	// adv shipyard - corasy
+	"coracsub": {
+		"role": ["builder", "sub"],
+		"retreat": 0.3
+	},
+	"corshark": {
+		"role": ["sub"],
+		"attribute": ["anti_sub"]
+	},
+	"corarch": {
+		"role": ["anti_air"]
+	},
+	"corcrus": {
+		"role": ["assault", "skirmish"],
+		"attribute": ["anti_sub"]
+	},
+	"corcarry": {
+		"role": ["support", "heavy"],
+		"retreat": 0.75
+	},
+	"cormship": {
+		"role": ["artillery"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+	"corbats": {
+		"role": ["heavy"],
+		"attribute": ["assault"],
+	},
+	"corblackhy": {
+		"role": ["heavy"],
+		"attribute": ["artillery"],
+		"retreat": 0.3
+	},
+
+	// aircraft - corap
+	"corca": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"corfink": {
+		"role": ["scout", "air"]
+	},
+	"corveng": {
+		"role": ["anti_air", "air"]
+	},
+	"corshad": {
+		"role": ["bomber", "air"]
+	},
+	"corbw": {
+		"role": ["raider", "air"],
+		"attribute": ["siege"],
+		"retreat": 0.3
+	},
+
+	// adv aircraft - coraap
+	"coraca": {
+		"role": ["builder", "air"],
+		"retreat": 0.6
+	},
+	"corawac": {
+		"role": ["scout", "air"]
+	},
+	"corvamp": {
+		"role": ["anti_air", "air"]
+	},
+	"corhurc": {
+		"role": ["bomber", "air"]
+	},
+	"corape": {
+		"role": ["assault", "air"],
+		"attribute": ["siege"],
+		"retreat": 0.5
+	},
+	"corcrw": {
+		"role": ["heavy", "air"],
+		"attribute": ["anti_heavy"],
+		"retreat": 0.4
 	}
 }
 }

@@ -130,9 +130,9 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 	// FIXME: BA
 //	buildSpeed    = def->GetBuildSpeed();
 	std::string name = def->GetName();
-	if (name == "armcom") {
+	if (name == "armcom" || name == "corcom") {
 		buildSpeed = 5.f;
-	} else if (name == "armnanotc") {
+	} else if (name == "armnanotc" || name == "cornanotc") {
 		buildSpeed = 12.f;
 	} else {
 		buildSpeed = 10.f;

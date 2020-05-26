@@ -159,41 +159,48 @@ void CMetalData::TriangulateGraph(const std::vector<double>& coords,
 		std::function<float (std::size_t A, std::size_t B)> distance,
 		std::function<void (std::size_t A, std::size_t B)> addEdge)
 {
-	delaunator::Delaunator d(coords);
-	using DEdge = std::pair<std::size_t, std::size_t>;
-	std::map<DEdge, std::set<std::size_t>> edges;
-	auto adjacent = [&edges](std::size_t A, std::size_t B, std::size_t C) {
-		if (A > B) {  // undirected edges (i < j)
-			std::swap(A, B);
-		}
-		edges[std::make_pair(A, B)].insert(C);
-	};
-	for (std::size_t i = 0; i < d.triangles.size(); i += 3) {
-		const std::size_t A = d.triangles[i + 0];
-		const std::size_t B = d.triangles[i + 1];
-		const std::size_t C = d.triangles[i + 2];
-		adjacent(A, B, C);
-		adjacent(B, C, A);
-		adjacent(C, A, B);
-	}
-	auto badEdge = [&edges, distance](const DEdge e, const std::set<std::size_t>& vs) {
-		float AB = distance(e.first, e.second);
-		for (std::size_t C : vs) {
-			float AC = distance(e.first, C);
-			float BC = distance(e.second, C);
-			if (AB > (BC + AC) * 0.9f) {
-				return true;
+	try {
+		delaunator::Delaunator d(coords);
+		using DEdge = std::pair<std::size_t, std::size_t>;
+		std::map<DEdge, std::set<std::size_t>> edges;
+		auto adjacent = [&edges](std::size_t A, std::size_t B, std::size_t C) {
+			if (A > B) {  // undirected edges (i < j)
+				std::swap(A, B);
 			}
+			edges[std::make_pair(A, B)].insert(C);
+		};
+		for (std::size_t i = 0; i < d.triangles.size(); i += 3) {
+			const std::size_t A = d.triangles[i + 0];
+			const std::size_t B = d.triangles[i + 1];
+			const std::size_t C = d.triangles[i + 2];
+			adjacent(A, B, C);
+			adjacent(B, C, A);
+			adjacent(C, A, B);
 		}
-		return false;
-	};
-	for (auto kv : edges) {
-		const DEdge& e = kv.first;
-		const std::set<std::size_t>& vs = kv.second;
-		if (badEdge(e, vs)) {
-			continue;
+		auto badEdge = [&edges, distance](const DEdge e, const std::set<std::size_t>& vs) {
+			float AB = distance(e.first, e.second);
+			for (std::size_t C : vs) {
+				float AC = distance(e.first, C);
+				float BC = distance(e.second, C);
+				if (AB > (BC + AC) * 0.9f) {
+					return true;
+				}
+			}
+			return false;
+		};
+		for (auto kv : edges) {
+			const DEdge& e = kv.first;
+			const std::set<std::size_t>& vs = kv.second;
+			if (badEdge(e, vs)) {
+				continue;
+			}
+			addEdge(e.first, e.second);
 		}
-		addEdge(e.first, e.second);
+	} catch (...) {
+		// collinear edges
+		for (unsigned i = 1; i < coords.size() / 2; ++i) {
+			addEdge(0, i);
+		}
 	}
 }
 

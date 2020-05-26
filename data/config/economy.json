@@ -29,36 +29,39 @@
 				"land": {
 					// "<energy_def>": [<lower limit>, <upper limit>]
 					// limit = random(<lower limit>..<upper limit>)
-					"armfus": [6, 12],
-					"armadvsol": [6, 30],
+					"armfus": [1, 5],
+					"armadvsol": [8, 16],
 					"armsolar": [16, 20],
 					"armwin": [20, 200]
 				},
 				"water": {
-					"armadvsol": [1],
-					"armsolar": [4],
-					"armwin": [20]
+					"armuwfus": [6, 12],
+					"armtide": [20, 30],
+					"armsolar": [16, 20],
+					"armwin": [20, 200]
 				}
 			},
 			"core": {
 				"land": {
 					// "<energy_def>": [<lower limit>, <upper limit>]
 					// limit = random(<lower limit>..<upper limit>)
-					"corfus": [6, 12],
-					"coradvsol": [6, 30],
+					"corfus": [1, 5],
+					"coradvsol": [8, 16],
 					"corsolar": [16, 20],
 					"corwin": [20, 200]
 				},
 				"water": {
-					"coradvsol": [1],
-					"corsolar": [4],
-					"corwin": [20]
+					"cortide": [16, 20],
+					"coruwfus": [6, 12],
+					"corsolar": [16, 20],
+					"corwin": [20, 200]
 				}
 			}
 		},
 		// income factor for energy, time is in seconds
 		// [[<start_factor>, <start_time>], [<end_factor>, <end_time>]]
 		"factor": [[0.15, 1], [7.0, 3600]],
+		// need to know how to make AI build more energy in start-game
 
 		"pylon": []
 	},
@@ -86,9 +89,9 @@
 	"build_delay": -1.0,
 
 	// New factory switch interval, in seconds
-	"switch": 9000,
+	"switch": 900,
 
-	"terra": "armsy",
+	//"terra": "armsy",
 	"airpad": {
 		"arm": "armasp",
 		"core": "corasp"
