@@ -108,6 +108,11 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 		const AIFloat3& assPos = unit->GetPos(frame);
 		TRY_UNIT(this->circuit, unit,
 			unit->CmdPriority(0);
+			// FIXME: BA
+			if (unit->GetCircuitDef()->IsRoleSupport()) {
+				unit->GetUnit()->ExecuteCustomCommand(CMD_PASSIVE, {1.f});
+			}
+			// FIXME: BA
 		)
 
 		// check factory nano belongs to
@@ -1232,7 +1237,9 @@ IUnitTask* CFactoryManager::CreateAssistTask(CCircuitUnit* unit)
 	auto units = circuit->GetCallback()->GetFriendlyUnitsIn(pos, radius * 0.9f);
 	for (Unit* u : units) {
 		CAllyUnit* candUnit = circuit->GetFriendlyUnit(u);
-		if ((candUnit == nullptr) || builderMgr->IsReclaimed(candUnit)) {
+		if ((candUnit == nullptr) || builderMgr->IsReclaimed(candUnit)
+			|| (*candUnit->GetCircuitDef() == *economyMgr->GetSideInfo().mexDef))  // FIXME: BA
+		{
 			continue;
 		}
 		if (u->IsBeingBuilt()) {

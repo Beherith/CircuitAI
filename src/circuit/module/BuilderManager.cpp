@@ -74,14 +74,30 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 			unit->SetManager(this);
 			this->circuit->AddActionUnit(unit);
 		}
-		idleTask->AssignTo(unit);
+		// FIXME: BA
+		if ((mexUpgrader.size() < numAutoMex)
+			&& unit->GetCircuitDef()->CanBuild(this->circuit->GetEconomyManager()->GetSideInfo().mohoMexDef))
+		{
+			IUnitTask* task = EnqueueWait(std::numeric_limits<int>::max());
+			AssignTask(unit, task);
 
-		++buildAreas[unit->GetArea()][unit->GetCircuitDef()];
+			AddBuildPower(unit);
+			mexUpgrader.insert(unit);
 
-		AddBuildPower(unit);
-		workers.insert(unit);
+			TRY_UNIT(this->circuit, unit,
+				unit->GetUnit()->ExecuteCustomCommand(CMD_AUTOMEX, {1.f});
+			)
+		} else {
+			idleTask->AssignTo(unit);
+
+			++buildAreas[unit->GetArea()][unit->GetCircuitDef()];
+
+			AddBuildPower(unit);
+			workers.insert(unit);
+		}
 
 		AddBuildList(unit);
+		// FIXME: BA
 	};
 	auto workerIdleHandler = [this](CCircuitUnit* unit) {
 		// FIXME: Avoid instant task reassignment, its only valid on build order fail.
@@ -102,11 +118,17 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 		if (task->GetType() == IUnitTask::Type::NIL) {
 			return;
 		}
-		--buildAreas[unit->GetArea()][unit->GetCircuitDef()];
+		// FIXME: BA
+		if (mexUpgrader.erase(unit) > 0) {
+			DelBuildPower(unit);
+		} else {
+			--buildAreas[unit->GetArea()][unit->GetCircuitDef()];
 
-		DelBuildPower(unit);
-		workers.erase(unit);
-		costQueries.erase(unit);
+			DelBuildPower(unit);
+			workers.erase(unit);
+			costQueries.erase(unit);
+		}
+		// FIXME: BA
 
 		RemoveBuildList(unit);
 	};
@@ -231,10 +253,12 @@ void CBuilderManager::ReadConfig()
 	const Json::Value& root = circuit->GetSetupManager()->GetConfig();
 	const std::string& cfgName = circuit->GetSetupManager()->GetConfigName();
 
-	terraDef = circuit->GetCircuitDef(root["economy"].get("terra", "").asCString());
+	const Json::Value& econ = root["economy"];
+	terraDef = circuit->GetCircuitDef(econ.get("terra", "").asCString());
 	if (terraDef == nullptr) {
 		terraDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}
+	numAutoMex = econ.get("auto_mex", 2).asUInt();
 
 	const Json::Value& cond = root["porcupine"]["superweapon"]["condition"];
 	super.minIncome = cond.get((unsigned)0, 50.f).asFloat();
@@ -1237,7 +1261,9 @@ void CBuilderManager::Watchdog()
 				float maxHealth = u->GetMaxHealth();
 				float buildPercent = (maxHealth - u->GetHealth()) / maxHealth;
 				CCircuitDef* cdef = unit->GetCircuitDef();
-				if ((cdef->GetBuildTime() * buildPercent < maxCost) || (*cdef == *terraDef)) {
+				if ((cdef->GetBuildTime() * buildPercent < maxCost) || (*cdef == *terraDef)
+					|| (*cdef == *economyMgr->GetSideInfo().mohoMexDef))  // FIXME: BA
+				{
 					EnqueueRepair(IBuilderTask::Priority::NORMAL, unit);
 				} else {
 					EnqueueReclaim(IBuilderTask::Priority::NORMAL, unit);

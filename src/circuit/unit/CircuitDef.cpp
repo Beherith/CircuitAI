@@ -79,7 +79,8 @@ void CCircuitDef::InitStatic(CCircuitAI* circuit, CMaskHandler* roleMasker)
 	CCircuitDef::roleNames = &roleMasker->GetMasks();
 }
 
-CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<Id>& buildOpts, Resource* res)
+CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<Id>& buildOpts,
+		Resource* resM, Resource* resE)
 		: def(def)
 		, mainRole(ROLE_TYPE(SCOUT))
 		, enemyRole(RoleMask::NONE)
@@ -150,7 +151,7 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 
 	speed     = def->GetSpeed();  // elmos per second
 	losRadius = def->GetLosRadius();
-	cost      = def->GetCost(res);
+	cost      = def->GetCost(resM) + def->GetCost(resE) * 0.05f;
 	cloakCost = std::max(def->GetCloakCost(), def->GetCloakCostMoving());
 	buildTime = def->GetBuildTime();
 //	altitude  = def->GetWantedHeight();
@@ -217,6 +218,16 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 	}
 	delete sd;
 
+	WeaponDef* stockDef = def->GetStockpileDef();
+	if (stockDef != nullptr) {
+		it = customParams.find("stockpilecost");
+		if (it != customParams.end()) {
+			stockCost = utils::string_to_float(it->second);
+		}
+		AddAttribute(AttrType::STOCK);
+		delete stockDef;
+	}
+
 	if (!def->IsAbleToAttack()) {
 		if (isShield) {
 			auto mounts = def->GetWeaponMounts();
@@ -232,16 +243,6 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 		}
 		// NOTE: Aspis (mobile shield) has 10 damage for some reason, break
 		return;
-	}
-
-	WeaponDef* stockDef = def->GetStockpileDef();
-	if (stockDef != nullptr) {
-		it = customParams.find("stockpilecost");
-		if (it != customParams.end()) {
-			stockCost = utils::string_to_float(it->second);
-		}
-		AddAttribute(AttrType::STOCK);
-		delete stockDef;
 	}
 
 	/*

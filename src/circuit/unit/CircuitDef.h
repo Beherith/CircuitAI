@@ -84,7 +84,8 @@ public:
 
 	CCircuitDef(const CCircuitDef& that) = delete;
 	CCircuitDef& operator=(const CCircuitDef&) = delete;
-	CCircuitDef(CCircuitAI* circuit, springai::UnitDef* def, std::unordered_set<Id>& buildOpts, springai::Resource* res);
+	CCircuitDef(CCircuitAI* circuit, springai::UnitDef* def, std::unordered_set<Id>& buildOpts,
+			springai::Resource* resM, springai::Resource* resE);
 	virtual ~CCircuitDef();
 
 	void Init(CCircuitAI* circuit);

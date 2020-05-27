@@ -172,6 +172,8 @@ private:
 	std::vector<IUnitTask*> buildUpdates;  // owner
 	unsigned int buildIterator;
 
+	unsigned numAutoMex;
+	std::set<CCircuitUnit*> mexUpgrader;
 	std::set<CCircuitUnit*> workers;
 	std::map<CCircuitUnit*, std::shared_ptr<IPathQuery>> costQueries;  // IPathQuery owner
 

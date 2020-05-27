@@ -67,7 +67,9 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 	 */
 	auto defenceFinishedHandler = [this](CCircuitUnit* unit) {
 		TRY_UNIT(this->circuit, unit,
-			unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+			for (int i = 0; i < 10; ++i) {
+				unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+			}
 		)
 	};
 	auto defenceDestroyedHandler = [this](CCircuitUnit* unit, CEnemyInfo* attacker) {
@@ -109,7 +111,9 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 				}
 			}
 			if (unit->GetCircuitDef()->IsAttrStock()) {
-				unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+				for (int i = 0; i < 10; ++i) {
+					unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+				}
 				unit->CmdMiscPriority(2);
 			}
 		)
@@ -156,7 +160,9 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 		TRY_UNIT(this->circuit, unit,
 			unit->GetUnit()->SetTrajectory(1);
 			if (unit->GetCircuitDef()->IsAttrStock()) {
-				unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+				for (int i = 0; i < 10; ++i) {
+					unit->GetUnit()->Stockpile(UNIT_COMMAND_OPTION_SHIFT_KEY | UNIT_COMMAND_OPTION_CONTROL_KEY);
+				}
 				unit->CmdMiscPriority(2);
 			}
 		)
@@ -226,6 +232,19 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 		}
 		if (cdef->GetDef()->IsBuilder()) {
 //			damagedHandler[unitDefId] = structDamagedHandler;
+			// FIXME: BA
+			if (cdef->GetBuildOptions().empty() && cdef->IsMobile()) {  // armrectr, cornecro
+				createdHandler[unitDefId] = attackerCreatedHandler;
+				finishedHandler[unitDefId] = attackerFinishedHandler;
+				idleHandler[unitDefId] = attackerIdleHandler;
+				damagedHandler[unitDefId] = attackerDamagedHandler;
+				destroyedHandler[unitDefId] = attackerDestroyedHandler;
+
+				if (cdef->GetRetreat() < 0.f) {
+					cdef->SetRetreat(fighterRet);
+				}
+			}
+			// FIXME: BA
 			continue;
 		}
 		const std::map<std::string, std::string>& customParams = cdef->GetDef()->GetCustomParams();
@@ -253,6 +272,12 @@ CMilitaryManager::CMilitaryManager(CCircuitAI* circuit)
 				} else if (cdef->IsAttrStock()) {
 					finishedHandler[unitDefId] = defenceFinishedHandler;
 				}
+			} else {
+				// FIXME: BA
+				if (cdef->IsAttrStock()) {
+					finishedHandler[unitDefId] = defenceFinishedHandler;
+				}
+				// FIXME: BA
 			}
 			if (commDef->CanBuild(cdef)) {
 				float range = cdef->GetDef()->GetRadarRadius();

@@ -47,7 +47,7 @@
 			// Available string values: explosion, expl_ally
 //			"radius": "explosion",  // default: "explosion"
 			"radius": 4,  // default: "explosion"
-			"not_ignore": ["factory", "engy_low"]
+			"not_ignore": ["factory", "engy_low", "terra"]
 		},
 		"fusion": {
 			"type": ["circle", "engy_mid"],
@@ -60,14 +60,15 @@
 		},
 		"pylon": {
 			"type": ["circle", "pylon"],
-			"not_ignore": ["factory", "pylon"]  // default: ["all"]
+			"not_ignore": ["factory", "pylon", "terra"]  // default: ["all"]
 		},
 		"store": {
 			"type": ["rectangle", "mex"],
-			"not_ignore": ["factory"]
+			"not_ignore": ["factory", "terra"]
 		},
 		"mex": {
 			"type": ["rectangle", "mex"],
+			"size": [5, 5],
 			"ignore": ["all"]
 		},
 		"def_low": {
@@ -98,7 +99,7 @@
 		},
 		"small": {
 			"type": ["rectangle", "unknown"],
-			"not_ignore": ["factory", "def_low"]
+			"not_ignore": ["factory", "def_low", "terra"]
 		},
 		"_default_": {
 			"type": ["rectangle", "unknown"],

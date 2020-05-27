@@ -360,10 +360,18 @@ void CEconomyManager::ReadConfig()
 		SSideInfo& sideInfo = sideInfos[kv.second.type];
 
 		// Metal
-		const char* name = metal[kv.first].asCString();
+		const char* name = metal[kv.first][0].asCString();
 		CCircuitDef* cdef = circuit->GetCircuitDef(name);
 		if (cdef != nullptr) {
 			sideInfo.mexDef = cdef;
+			allMexDefs.insert(cdef->GetId());
+		} else {
+			circuit->LOG("CONFIG %s: has unknown UnitDef '%s'", cfgName.c_str(), name);
+		}
+		name = metal[kv.first][1].asCString();
+		cdef = circuit->GetCircuitDef(name);
+		if (cdef != nullptr) {
+			sideInfo.mohoMexDef = cdef;
 			allMexDefs.insert(cdef->GetId());
 		} else {
 			circuit->LOG("CONFIG %s: has unknown UnitDef '%s'", cfgName.c_str(), name);
@@ -911,7 +919,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 
 		if (engy.cdef->GetCount() < engy.limit) {
 			isLastHope = false;
-			if (taskSize < (int)(buildPower / engy.cost * 8 + 1)) {
+			if (taskSize < (int)(buildPower / engy.cost * 4 + 1)) {
 				bestDef = engy.cdef;
 				// TODO: Select proper scale/quadratic function (x*x) and smoothing coefficient (8).
 				//       МЕТОД НАИМЕНЬШИХ КВАДРАТОВ ! (income|buildPower, make/cost) - points
@@ -929,7 +937,7 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 			break;
 		} else if (hopeDef == nullptr) {
 			hopeDef = engy.cdef;
-			isLastHope = isLastHope && (taskSize < (int)(buildPower / hopeDef->GetCost() * 8 + 1));
+			isLastHope = isLastHope && (taskSize < (int)(buildPower / engy.cost * 4 + 1));
 		}
 	}
 	if (isLastHope) {
@@ -1332,7 +1340,7 @@ void CEconomyManager::UpdateEconomy()
 	const float curEnergy = economy->GetCurrent(energyRes);
 	const float storEnergy = GetStorage(energyRes);
 	isEnergyEmpty = curEnergy < storEnergy * 0.1f;
-	isEnergyStalling &= curEnergy < storEnergy * 0.7f;
+	isEnergyStalling |= curEnergy < storEnergy * 0.7f;
 
 	if (ecoFrame <= efInfo.startFrame) {
 		energyFactor = efInfo.startFactor;

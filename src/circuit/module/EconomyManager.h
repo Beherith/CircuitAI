@@ -35,6 +35,7 @@ public:
 	friend class CEconomyScript;
 	struct SSideInfo {
 		CCircuitDef* mexDef;
+		CCircuitDef* mohoMexDef;
 		CCircuitDef* defaultDef;
 	};
 

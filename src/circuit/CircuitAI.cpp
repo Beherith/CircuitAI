@@ -165,6 +165,8 @@ int CCircuitAI::HandleGameEvent(int topic, const void* data)
 				NotifyGameEnd();
 				ret = 0;
 			} catch (...) {
+				Release(RELEASE_CORRUPTED);
+				NotifyGameEnd();
 				ret = ERROR_INIT;
 			}
 			break;
@@ -628,6 +630,7 @@ int CCircuitAI::Release(int reason)
 	metalRes = energyRes = nullptr;
 
 	delete script;
+	script = nullptr;
 	utils::free_clear(weaponDefs);
 	for (auto& kv : defsById) {
 		delete kv.second;
@@ -1432,7 +1435,8 @@ void CCircuitAI::InitUnitDefs(float& outDcr)
 	if (!gameAttribute->GetTerrainData().IsInitialized()) {
 		gameAttribute->GetTerrainData().Init(this);
 	}
-	Resource* res = callback->GetResourceByName("Metal");
+	Resource* resM = callback->GetResourceByName("Metal");
+	Resource* resE = callback->GetResourceByName("Energy");
 	outDcr = 0.f;
 	auto unitDefs = callback->GetUnitDefs();
 	for (UnitDef* ud : unitDefs) {
@@ -1442,7 +1446,7 @@ void CCircuitAI::InitUnitDefs(float& outDcr)
 			opts.insert(buildDef->GetUnitDefId());
 			delete buildDef;
 		}
-		CCircuitDef* cdef = new CCircuitDef(this, ud, opts, res);
+		CCircuitDef* cdef = new CCircuitDef(this, ud, opts, resM, resE);
 
 		defsByName[ud->GetName()] = cdef;
 		defsById[cdef->GetId()] = cdef;
@@ -1452,7 +1456,8 @@ void CCircuitAI::InitUnitDefs(float& outDcr)
 			outDcr = dcr;
 		}
 	}
-	delete res;
+	delete resM;
+	delete resE;
 
 	for (auto& kv : GetCircuitDefs()) {
 		kv.second->Init(this);
