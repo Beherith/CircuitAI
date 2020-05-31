@@ -121,6 +121,11 @@ CCircuitDef* CFactoryData::GetFactoryToBuild(CCircuitAI* circuit,
 		return percents[a.id] > percents[b.id];
 	};
 	std::sort(availFacs.begin(), availFacs.end(), cmp);
+	// FIXME: DEBUG
+//	for (SFactory& fac : availFacs) {
+//		circuit->LOG("%s | %f", circuit->GetCircuitDef(fac.id)->GetDef()->GetName(), percents[fac.id]);
+//	}
+	// FIXME: DEBUG
 
 	if (isReset) {
 		choiceNum = 0;
