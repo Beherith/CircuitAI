@@ -75,14 +75,14 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 			this->circuit->AddActionUnit(unit);
 		}
 		// FIXME: BA
-		if ((mexUpgrader.size() < numAutoMex)
+		if ((mexUpgrader[unit->GetCircuitDef()->GetMobileId()].size() < numAutoMex)
 			&& unit->GetCircuitDef()->CanBuild(this->circuit->GetEconomyManager()->GetSideInfo().mohoMexDef))
 		{
 			IUnitTask* task = EnqueueWait(std::numeric_limits<int>::max());
 			AssignTask(unit, task);
 
 			AddBuildPower(unit);
-			mexUpgrader.insert(unit);
+			mexUpgrader[unit->GetCircuitDef()->GetMobileId()].insert(unit);
 
 			TRY_UNIT(this->circuit, unit,
 				unit->GetUnit()->ExecuteCustomCommand(CMD_AUTOMEX, {1.f});
@@ -119,7 +119,7 @@ CBuilderManager::CBuilderManager(CCircuitAI* circuit)
 			return;
 		}
 		// FIXME: BA
-		if (mexUpgrader.erase(unit) > 0) {
+		if (mexUpgrader[unit->GetCircuitDef()->GetMobileId()].erase(unit) > 0) {
 			DelBuildPower(unit);
 		} else {
 			--buildAreas[unit->GetArea()][unit->GetCircuitDef()];
@@ -436,14 +436,6 @@ int CBuilderManager::UnitCreated(CCircuitUnit* unit, CCircuitUnit* builder)
 		if ((taskB->GetTarget() == nullptr) && (taskB->GetBuildDef() != nullptr) &&
 			(*taskB->GetBuildDef() == *unit->GetCircuitDef()) && taskB->IsEqualBuildPos(unit))
 		{
-			// FIXME: DEBUG
-			AIFloat3 bp = taskB->GetBuildPos();
-			circuit->GetDrawer()->AddPoint(bp, "bp");
-			circuit->LOG("bp = %f, %f", bp.x, bp.z);
-			AIFloat3 up = unit->GetPos(circuit->GetLastFrame());
-			circuit->GetDrawer()->AddPoint(up, "up");
-			circuit->LOG("up = %f, %f", up.x, up.z);
-			// FIXME: DEBUG
 			taskB->UpdateTarget(unit);
 			unfinishedUnits[unit] = taskB;
 		} else {
@@ -571,7 +563,7 @@ IBuilderTask* CBuilderManager::EnqueueTask(IBuilderTask::Priority priority,
 										   bool isActive,
 										   int timeout)
 {
-	float cost = buildDef->GetCost();
+	float cost = buildDef->GetCostM();
 	return AddTask(priority, buildDef, position, type, cost, shake, isActive, timeout);
 }
 
@@ -583,7 +575,7 @@ IBuilderTask* CBuilderManager::EnqueueFactory(IBuilderTask::Priority priority,
 											  bool isActive,
 											  int timeout)
 {
-	const float cost = isPlop ? 1.f : buildDef->GetCost();
+	const float cost = isPlop ? 1.f : buildDef->GetCostM();
 	IBuilderTask* task = new CBFactoryTask(this, priority, buildDef, position, cost, shake, isPlop, timeout);
 	if (isActive) {
 		buildTasks[static_cast<IBuilderTask::BT>(IBuilderTask::BuildType::FACTORY)].insert(task);
@@ -1170,7 +1162,7 @@ IBuilderTask* CBuilderManager::CreateBuilderTask(const AIFloat3& position, CCirc
 	} else {
 		CMilitaryManager* militaryMgr = circuit->GetMilitaryManager();
 		buildDef = militaryMgr->GetBigGunDef();
-		if ((buildDef != nullptr) && (buildDef->GetCost() < super.maxTime * metalIncome)) {
+		if ((buildDef != nullptr) && (buildDef->GetCostM() < super.maxTime * metalIncome)) {
 			const std::set<IBuilderTask*>& tasks = GetTasks(IBuilderTask::BuildType::BIG_GUN);
 			if (tasks.empty()) {
 				if (buildDef->IsAvailable(circuit->GetLastFrame()) && militaryMgr->IsNeedBigGun(buildDef)) {

@@ -173,7 +173,7 @@ private:
 	unsigned int buildIterator;
 
 	unsigned numAutoMex;
-	std::set<CCircuitUnit*> mexUpgrader;
+	std::unordered_map<int, std::set<CCircuitUnit*>> mexUpgrader;  // Mobile type Id: set of units
 	std::set<CCircuitUnit*> workers;
 	std::map<CCircuitUnit*, std::shared_ptr<IPathQuery>> costQueries;  // IPathQuery owner
 

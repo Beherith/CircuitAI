@@ -1,27 +1,6 @@
 // Mono-space font required
 {
 "economy": {
-	// Limits of energy structures partly defined by parabola in space (structure_cost/energyMake, unit_limit).
-	// Parabola defined by 3 control points.
-	// For example land config:
-	//   P0 = energysingu: (4000/225; random(1..2)) = (17.78, 1)
-	//   P1 = energyfusion: (1000/35; random(3)) = (28.57, 3)
-	//   P2 = energysolar: (70/2; random(10..15)) = (35, 13)
-	// P(x) => y = 0.079550*x*x - 3.501790*x + 38.113789
-	// Then parabola P(x) defines limit for
-	//   "energygeo": x=500/25=20, y = P(20) = 31.82 - 70.0358 + 38.113789 ~= 0
-	//   "energywind": x=35/1.2=29.17, y = P(29.17) ~= 4
-	//
-	// Metal income condition for energy structure is: income > sqrt(structure_cost*0.4).
-	// Energy buildings are sorted by structure_cost/energy_make (asc).
-	// Config in example with factor=0.8 leads to next build choice:
-	//   1) nothing if singu_limit >= 1;
-	//   2) else if singu_limit < 1 and income > 50 then singu;
-	//   (ignored) else if geo_limit < 0 and income > 17.68 then geo;
-	//   3) else if fusion_limit < 3 and income > 25 then fusion;
-	//   4) else if tidal_limit < 4 and income > 4.68 then wind/tidal;
-	//   5) else if solar_limit < 13 and income > 6.61 then solar;
-	//   6) if nothing selected then build highest energy according to income.
 	"energy": {
 		// If land area >= 40% of the map then "land" config used, "water" otherwise
 		"side": {
@@ -29,28 +8,32 @@
 				"land": {
 					// "<energy_def>": [<lower limit>, <upper limit>]
 					// limit = random(<lower limit>..<upper limit>)
-					"armsolar": [14],
-					"armadvsol": [15],
-					"armfus": [1]
+					"armwin": [7, 9],
+					"armsolar": [7, 9],
+					"armadvsol": [7, 9],
+					"armfus": [2, 4]
 				},
 				"water": {
-					"armtide": [30],
-					"armsolar": [20],
-					"armuwfus": [6]
+					"armtide": [7, 9],
+					"armwin": [7, 9],
+					"armsolar": [1],
+					"armuwfus": [2, 4]
 				}
 			},
 			"core": {
 				"land": {
 					// "<energy_def>": [<lower limit>, <upper limit>]
 					// limit = random(<lower limit>..<upper limit>)
-					"corsolar": [14],
-					"coradvsol": [15],
-					"corfus": [1]
+					"corwin": [7, 9],
+					"corsolar": [7, 9],
+					"coradvsol": [7, 9],
+					"corfus": [2, 4]
 				},
 				"water": {
-					"cortide": [30],
-					"corsolar": [20],
-					"coruwfus": [6]
+					"cortide": [7, 9],
+					"corwin": [7, 9],
+					"corsolar": [1],
+					"coruwfus": [2, 4]
 				}
 			}
 		},
@@ -66,7 +49,7 @@
 		"arm": ["armmex", "armmoho"],  // [T1_mex, T2_mex]
 		"core": ["cormex", "cormoho"]  // [T1_mex, T2_mex]
 	},
-	"auto_mex": 1,  // number of T2 builders forced to auto-mex only
+	"auto_mex": 1,  // number of T2 builders for each mobile type forced to auto-mex only
 
 	// Scales metal income
 	// ecoFactor = teamSize*eps_step+(1-eps_step)
@@ -85,9 +68,10 @@
 	// Construction order delay in seconds, -1 to disable
 	"build_delay": -1.0,
 
-	// New factory switch interval, in seconds (this is a one-time trigger, after this it's based on eco + caretakers)
-	"switch": 450,
-	
+	// New factory switch interval, in seconds (each new factory resets timer, switch event is also based on eco + caretakers)
+	// switch = random(<min_interval>..<max_interval>)
+	"switch": [600, 900],
+
 	//"terra": "armsy",
 	"airpad": {
 		"arm": "armasp",

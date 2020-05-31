@@ -17,8 +17,8 @@
 	"water": [1, 2, 1, 1, 2, 1, 4, 13, 9, 10, 9, 10],
 	"prevent": 2,  // number of preventive defences
 	"amount": {  // income bound factor
-		"offset": [-0.15, 0.075],
-		// Amount factor: 10x10 ~ 1.7, 20x20 ~ 1.5
+		"offset": [-0.15, 0.15],
+		// Amount factor: 10x10 ~ 3.8, 20x20 ~ 3.4
 		"factor": [3.8, 3.4],
 		"map": [10, 20]
 	},

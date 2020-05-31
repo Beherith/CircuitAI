@@ -226,7 +226,8 @@ public:
 
 	float GetSpeed()     const { return speed; }
 	float GetLosRadius() const { return losRadius; }
-	float GetCost()      const { return cost; }
+	float GetCostM()     const { return costM; }
+	float GetCostE()     const { return costE; }
 	float GetCloakCost() const { return cloakCost; }
 	float GetStockCost() const { return stockCost; }
 	float GetBuildTime() const { return buildTime; }
@@ -316,7 +317,8 @@ private:
 
 	float speed;
 	float losRadius;
-	float cost;
+	float costM;
+	float costE;
 	float cloakCost;
 	float stockCost;
 	float buildTime;

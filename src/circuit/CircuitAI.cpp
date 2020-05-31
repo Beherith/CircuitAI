@@ -808,7 +808,9 @@ int CCircuitAI::Message(int playerId, const char* message)
 		terrainManager->ToggleVis();
 	}
 	else if (strncmp(message, cmdWBlock, 7) == 0) {
-		terrainManager->ToggleWidgetDraw();
+		if (teamId == atoi((const char*)&message[8])) {
+			terrainManager->ToggleWidgetDraw();
+		}
 	}
 
 	else if (strncmp(message, cmdArea, 5) == 0) {

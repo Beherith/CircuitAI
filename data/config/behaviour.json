@@ -320,7 +320,7 @@
 		"role": ["anti_air"]
 	},
 	"armmark": {
-		"role": ["support"]
+		"role": ["assault"]
 	},
 	"armspid": {
 		"role": ["support"]
@@ -358,7 +358,7 @@
 		"limit": 10
 	},
 	"armbeaver": {
-		"role": ["support", "mine"],
+		"role": ["builder"],
 		"limit": 10
 	},
 	// "armmlv": {
@@ -585,7 +585,7 @@
 		"attribute": ["skirmish"]
 	},
 	"corhrk": {
-		"role": ["bomber"]
+		"role": ["artillery"]
 	},
 	"coraak": {
 		"role": ["anti_air"]
@@ -627,7 +627,7 @@
 		"limit": 10
 	},
 	"cormuskrat": {
-		"role": ["support", "mine"],
+		"role": ["builder"],
 		"limit": 10
 	},
 	// "cormlv": {
@@ -651,7 +651,7 @@
 		"role": ["riot"]
 	},
 	"corwolv": {
-		"role": ["artillery"]
+		"role": ["skirmish"]
 	},
 	"cormist": {
 		"role": ["anti_air"],
@@ -680,13 +680,14 @@
 		"role": ["artillery"]
 	},
 	"corban": {
-		"role": ["raider"]
+		"role": ["skirmish"]
 	},
 	"cortrem": {
-		"role": ["heavy"]
+		"role": ["artillery"]
 	},
 	"corvrad": {
-		"role": ["support"]
+		"role": ["assault"],
+		"limit": 1
 	},
 
 	// ships - corsy

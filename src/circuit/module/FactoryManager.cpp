@@ -68,9 +68,9 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 		)
 
 		int frame = this->circuit->GetLastFrame();
-		if (factories.empty() && (this->circuit->GetBuilderManager()->GetWorkerCount() <= 2)) {
+//		if (factories.empty() && (this->circuit->GetBuilderManager()->GetWorkerCount() <= 2)) {
 			this->circuit->GetEconomyManager()->OpenStrategy(unit->GetCircuitDef(), unit->GetPos(frame));
-		}
+//		}
 
 		EnableFactory(unit);
 	};
@@ -399,8 +399,8 @@ void CFactoryManager::ReadConfig()
 					continue;
 				}
 				CCircuitDef* tdef = circuit->GetCircuitDef(bid);
-				if (minCost > tdef->GetCost()) {
-					minCost = tdef->GetCost();
+				if (minCost > tdef->GetCostM()) {
+					minCost = tdef->GetCostM();
 					rdef = tdef;
 				}
 			}
@@ -851,8 +851,7 @@ CRecruitTask* CFactoryManager::UpdateBuildPower(CCircuitUnit* unit)
 		if (!terrainMgr->CanBeBuiltAt(buildDef, pos, unit->GetCircuitDef()->GetBuildDistance())) {
 			return nullptr;
 		}
-		float radius = std::max(terrainMgr->GetTerrainWidth(), terrainMgr->GetTerrainHeight()) / 4;
-		return EnqueueTask(CRecruitTask::Priority::NORMAL, buildDef, pos, CRecruitTask::RecruitType::BUILDPOWER, radius);
+		return EnqueueTask(CRecruitTask::Priority::NORMAL, buildDef, pos, CRecruitTask::RecruitType::BUILDPOWER, 128.f);
 	}
 	return nullptr;
 }
@@ -917,7 +916,7 @@ CRecruitTask* CFactoryManager::UpdateFirePower(CCircuitUnit* unit)
 	for (unsigned i = 0; i < facDef.buildDefs.size(); ++i) {
 		CCircuitDef* bd = facDef.buildDefs[i];
 		if (((bd->GetCloakCost() > .1f) && (energyNet < bd->GetCloakCost()))
-			|| (bd->GetCost() > maxCost)
+			|| (bd->GetCostM() > maxCost)
 			|| !bd->IsAvailable(frame)
 			|| !terrainMgr->CanBeBuiltAt(bd, pos, range)
 			|| !isEnemyInArea(frame, bd))

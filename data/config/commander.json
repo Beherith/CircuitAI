@@ -17,7 +17,7 @@
 						[0.1, ["raider", "builder", "riot", "builder", "raider", "raider", "raider", "raider", "builder", "raider", "support"]]
 					]
 				},
-				"default": ["raider", "raider", "builder", "raider", "builder", "raider", "support", "raider"]
+				"default": ["builder", "raider", "raider", "raider", "builder", "raider", "support", "raider"]
 			},
 
 			// Morph params
@@ -47,7 +47,7 @@
 						[0.1, ["raider", "builder", "riot", "builder", "raider", "raider", "raider", "raider", "builder", "raider", "support"]]
 					]
 				},
-				"default": ["raider", "raider", "builder", "raider", "builder", "raider", "support", "raider"]
+				"default": ["builder", "raider", "raider", "raider", "builder", "raider", "support", "raider"]
 			},
 
 			// Morph params
