@@ -45,6 +45,9 @@ public:
 	virtual ~CSetupManager();
 	void DisabledUnits(const char* setupScript);
 
+	void BuildDelay(const char* setupScript);  // FIXME: BA
+	int buildDelay = -1;  // FIXME: BA
+
 	bool OpenConfig(const std::string& cfgOption);
 	void CloseConfig();
 	const Json::Value& GetConfig() const { return *config; }

@@ -294,7 +294,9 @@ void CEconomyManager::ReadConfig()
 	const int minSwitch = swch.get((unsigned)0, 900).asInt();
 	const int maxSwitch = swch.get((unsigned)1, 900).asInt();
 	switchTime = (minSwitch + rand() % (maxSwitch - minSwitch + 1)) * FRAMES_PER_SEC;
-	const float bd = econ.get("build_delay", -1.f).asFloat();
+	const float bd = (circuit->GetSetupManager()->buildDelay > 0)
+			? circuit->GetSetupManager()->buildDelay
+			: econ.get("build_delay", -1.f).asFloat();
 	buildDelay = (bd > 0.f) ? (bd * FRAMES_PER_SEC) : 0;
 
 	const Json::Value& energy = econ["energy"];

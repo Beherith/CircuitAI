@@ -51,6 +51,7 @@ CSetupManager::CSetupManager(CCircuitAI* circuit, CSetupData* setupData)
 		setupData->ParseSetupScript(circuit, setupScript);
 	}
 	DisabledUnits(setupScript);
+	BuildDelay(setupScript);
 
 	findStart = std::make_shared<CGameTask>(&CSetupManager::FindStart, this);
 	circuit->GetScheduler()->RunTaskEvery(findStart, 1);
@@ -101,6 +102,29 @@ void CSetupManager::DisabledUnits(const char* setupScript)
 	delete options;
 	if (value != nullptr) {
 		disableUnits(value);
+	}
+}
+
+void CSetupManager::BuildDelay(const char* setupScript)
+{
+	std::string script(setupScript);
+
+	std::string modoptionsTag("[modoptions]");
+	std::string::const_iterator bodyBegin = std::search(
+			script.begin(), script.end(),
+			modoptionsTag.begin(), modoptionsTag.end(),
+			[](char ch1, char ch2) { return std::tolower(ch1) == ch2; }
+	);
+	if (bodyBegin != script.end()) {
+		std::advance(bodyBegin, modoptionsTag.length());
+		std::string::const_iterator bodyEnd = utils::EndInBraces(bodyBegin, script.end());
+
+		std::smatch builddelay;
+		std::regex patternDisabled("ai_build_delay=(\\d*);", std::regex::ECMAScript | std::regex::icase);
+		if (std::regex_search(bodyBegin, bodyEnd, builddelay, patternDisabled)) {
+			// !setoptions ai_build_delay=10
+			buildDelay = utils::string_to_int(builddelay[1]);
+		}
 	}
 }
 
