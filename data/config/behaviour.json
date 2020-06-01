@@ -2,7 +2,7 @@
 {
 "quota": {
 	"scout": 1,  // max scout units out of raiders
-	"raid": [3.0, 16.0],  // [<min>, <avg>] power of raider squad
+	"raid": [3.0, 42.0],  // [<min>, <avg>] power of raider squad
 	"attack": 60.0,  // min power of attack group
 	"thr_mod": {
 		"attack": [0.4, 0.5],  // [<min>, <max>] enemy threat modifier for target selection of attack task
@@ -41,7 +41,7 @@
 		"role": ["builder"],
 		"attribute": ["commander"]
 	},
-	
+
 	// ARM defenses
 	"armllt": {
 		"role": ["static"],
@@ -261,7 +261,7 @@
 	"armpw": {
 		"role": ["raider"],
 		"attribute": ["scout"],
-		"pwr_mod": 2
+		"pwr_mod": 1.5
 	},
 	"armrectr": {
 		"role": ["raider", "mine"],
@@ -320,7 +320,9 @@
 		"role": ["anti_air"]
 	},
 	"armmark": {
-		"role": ["assault"]
+		"role": ["assault"],
+		"attribute": ["support"],
+		"limit": 1
 	},
 	"armspid": {
 		"role": ["support"]
@@ -416,7 +418,9 @@
 		"role": ["anti_air"]
 	},
 	"armseer": {
-		"role": ["support"]
+		"role": ["assault"],
+		"attribute": ["support"],
+		"limit": 1
 	},
 
 	// aircraft - armap
@@ -533,6 +537,26 @@
 		"attribute": ["artillery"],
 		"retreat": 0.3
 	},
+	//ARM HOVERS
+
+	"armch": {
+		"role": ["builder"],
+		"limit": 10
+	},
+	"armsh": {
+		"role": ["scout"]
+	},
+	"armanac": {
+		"role": ["assault"]
+	},
+	"armmh": {
+		"role": ["artillery"]
+	},
+	"armah": {
+		"role": ["anti_air"],
+		"attribute": ["skirmish"],
+		"thr_mod": 0.4
+	},
 
 	// kbot - corlab
 	"corck": {
@@ -541,8 +565,7 @@
 	},
 	"corak": {
 		"role": ["raider"],
-		"attribute": ["scout"],
-		"pwr_mod": 2
+		"attribute": ["scout"]
 	},
 	"cornecro": {
 		"role": ["raider", "mine"],
@@ -597,6 +620,11 @@
 		"role": ["assault"],
 		"attribute": ["melee"],
 		"retreat": 0,
+	},
+	"corvoyr": {
+		"role": ["assault"],
+		"attribute": ["support"],
+		"limit": 1
 	},
 
 	// T3 kbot - corgant
@@ -683,10 +711,11 @@
 		"role": ["skirmish"]
 	},
 	"cortrem": {
-		"role": ["artillery"]
+		"role": ["artillery", "heavy"]
 	},
 	"corvrad": {
 		"role": ["assault"],
+		"attribute": ["support"],
 		"limit": 1
 	},
 
@@ -750,6 +779,30 @@
 		"attribute": ["artillery"],
 		"retreat": 0.3
 	},
+//CORE HOVERS
+
+	"corch": {
+		"role": ["builder"],
+		"limit": 10
+	},
+	"corsh": {
+		"role": ["scout"]
+	},
+	"corsnap": {
+		"role": ["assault"]
+	},
+	"cormh": {
+		"role": ["artillery"]
+	},
+	"corah": {
+		"role": ["anti_air"],
+		"attribute": ["skirmish"],
+		"thr_mod": 0.4
+	},
+	"corhal": {
+		"role": ["assault"]
+	},
+
 
 	// aircraft - corap
 	"corca": {
