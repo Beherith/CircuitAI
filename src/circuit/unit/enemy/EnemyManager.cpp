@@ -73,7 +73,7 @@ std::pair<CEnemyUnit*, bool> CEnemyManager::RegisterEnemyUnit(ICoreUnit::Id unit
 	if (u == nullptr) {
 		return std::make_pair(nullptr, true);
 	}
-	if (/*u->IsNeutral() || */u->GetRulesParamFloat("ignoredByAI", 0.f) > 0.f) {
+	if (u->IsNeutral() || u->GetRulesParamFloat("ignoredByAI", 0.f) > 0.f) {
 		delete u;
 		return std::make_pair(nullptr, false);
 	}
@@ -96,7 +96,7 @@ std::pair<CEnemyUnit*, bool> CEnemyManager::RegisterEnemyUnit(ICoreUnit::Id unit
 
 CEnemyUnit* CEnemyManager::RegisterEnemyUnit(Unit* e)
 {
-	if (/*e->IsNeutral() || */e->GetRulesParamFloat("ignoredByAI", 0.f) > 0.f) {
+	if (e->IsNeutral() || e->GetRulesParamFloat("ignoredByAI", 0.f) > 0.f) {
 		return nullptr;
 	}
 
