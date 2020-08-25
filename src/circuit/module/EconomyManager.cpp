@@ -54,10 +54,14 @@ CEconomyManager::CEconomyManager(CCircuitAI* circuit)
 		, isMetalFull(false)
 		, isEnergyStalling(false)
 		, isEnergyEmpty(false)
+		, metalCurFrame(-1)
 		, metalPullFrame(-1)
+		, energyCurFrame(-1)
 		, energyPullFrame(-1)
 		, energyUseFrame(-1)
+		, metalCur(.0f)
 		, metalPull(.0f)
+		, energyCur(.0f)
 		, energyPull(.0f)
 		, energyUse(.0f)
 {
@@ -642,6 +646,15 @@ void CEconomyManager::UpdateResourceIncome()
 	metalUsed += economy->GetUsage(metalRes);
 }
 
+float CEconomyManager::GetMetalCur()
+{
+	if (metalCurFrame/* + TEAM_SLOWUPDATE_RATE*/ < circuit->GetLastFrame()) {
+		metalCurFrame = circuit->GetLastFrame();
+		metalCur = economy->GetCurrent(metalRes);
+	}
+	return metalCur;
+}
+
 float CEconomyManager::GetMetalPull()
 {
 	if (metalPullFrame/* + TEAM_SLOWUPDATE_RATE*/ < circuit->GetLastFrame()) {
@@ -649,6 +662,15 @@ float CEconomyManager::GetMetalPull()
 		metalPull = economy->GetPull(metalRes) + circuit->GetTeam()->GetRulesParamFloat("extraMetalPull", 0.f);
 	}
 	return metalPull;
+}
+
+float CEconomyManager::GetEnergyCur()
+{
+	if (energyCurFrame/* + TEAM_SLOWUPDATE_RATE*/ < circuit->GetLastFrame()) {
+		energyCurFrame = circuit->GetLastFrame();
+		energyCur = economy->GetCurrent(energyRes);
+	}
+	return energyCur;
 }
 
 float CEconomyManager::GetEnergyPull()
@@ -926,12 +948,12 @@ IBuilderTask* CEconomyManager::UpdateEnergyTasks(const AIFloat3& position, CCirc
 				//       solar       geothermal    fusion         singu           ...
 				//       (10, 2/70), (15, 25/500), (20, 35/1000), (30, 225/4000), ...
 				if ((engy.costM * 16.0f < maxBuildTime * SQUARE(metalIncome))
-					&& (engy.costE * 0.05f < energyIncome))
+					&& (engy.costE * 0.06f < energyIncome))
 				{
 					break;
 				}
 			} else if ((engy.costM * 16.0f < maxBuildTime * SQUARE(metalIncome))
-					&& (engy.costE * 0.05f < energyIncome))
+					&& (engy.costE * 0.06f < energyIncome))
 			{
 				bestDef = nullptr;
 				break;
@@ -1334,12 +1356,12 @@ void CEconomyManager::UpdateEconomy()
 	}
 	ecoFrame = circuit->GetLastFrame();
 
-	const float curMetal = economy->GetCurrent(metalRes);
+	const float curMetal = GetMetalCur();
 	const float storMetal = GetStorage(metalRes);
 	isMetalEmpty = curMetal < storMetal * 0.2f;
 	isMetalFull = curMetal > storMetal * 0.8f;
 	isEnergyStalling = std::min(GetAvgMetalIncome() - GetMetalPull(), .0f)/* * 0.98f*/ > std::min(GetAvgEnergyIncome() - GetEnergyPull(), .0f);
-	const float curEnergy = economy->GetCurrent(energyRes);
+	const float curEnergy = GetEnergyCur();
 	const float storEnergy = GetStorage(energyRes);
 	isEnergyEmpty = curEnergy < storEnergy * 0.1f;
 	isEnergyStalling |= curEnergy < storEnergy * 0.7f;

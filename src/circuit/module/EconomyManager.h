@@ -71,7 +71,9 @@ public:
 	float GetAvgEnergyIncome() const { return energyIncome; }
 	float GetEcoFactor() const { return ecoFactor; }
 	float GetPullMtoS() const { return pullMtoS; }
+	float GetMetalCur();
 	float GetMetalPull();
+	float GetEnergyCur();
 	float GetEnergyPull();
 	float GetEnergyUse();
 	bool IsMetalEmpty();
@@ -191,10 +193,14 @@ private:
 	bool isEnergyStalling;
 	bool isEnergyEmpty;
 
+	int metalCurFrame;
 	int metalPullFrame;
+	int energyCurFrame;
 	int energyPullFrame;
 	int energyUseFrame;
+	float metalCur;
 	float metalPull;
+	float energyCur;
 	float energyPull;
 	float energyUse;
 

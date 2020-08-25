@@ -98,7 +98,7 @@ public:
 	void ManualFire(CEnemyInfo* target, int timeout);
 	bool IsDisarmed(int frame);
 	bool IsWeaponReady(int frame);
-	bool IsDGunReady(int frame);
+	bool IsDGunReady(int frame, float energy);
 	bool IsShieldCharged(float percent);
 	bool IsJumpReady();
 	bool IsJumping();
