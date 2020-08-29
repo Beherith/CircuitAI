@@ -42,7 +42,7 @@
 		"attribute": ["commander"]
 	},
 
-	// ARM defenses
+	// ARMADA defenses
 	"armllt": {
 		"role": ["static"],
 		"thr_mod": 0.5
@@ -57,7 +57,8 @@
 	},
 	"armguard": {
 		"role": ["static"],
-		"attribute": ["artillery"]
+		"attribute": ["artillery"],
+		"thr_mod": 0.3
 	},
 	"armclaw": {
 		"role": ["static"]
@@ -98,7 +99,7 @@
 		"pwr_mod": 1.5
 	},
 
-	// CORE defenses
+	// CORTEX defenses
 	"corllt": {
 		"role": ["static"],
 		"thr_mod": 0.5
@@ -116,7 +117,8 @@
 	},
 	"corpun": {
 		"role": ["static"],
-		"attribute": ["artillery"]
+		"attribute": ["artillery"],
+		"thr_mod": 0.3
 	},
 	"corrl": {
 		"role": ["anti_air"]
@@ -211,7 +213,7 @@
     },
 
 
-	// kbot - armlab
+	// bot - armlab
 	"armck": {
 		// "role": [<main>, <enemy>, <enemy>, ...]
 		// <main> is the role to make desicions of when to build it and what task to assign
@@ -286,7 +288,7 @@
 		"role": ["scout"]
 	},
 
-	// adv kbot - armalab
+	// adv bot - armalab
 	"armack": {
 		"role": ["builder"],
 		"limit": 4
@@ -335,7 +337,7 @@
 		"role": ["anti_heavy"]
 	},
 
-	// T3 kbot - armshltx
+	// T3 bot - armshltx
 	"armmar": {
 		"role": ["raider", "heavy"]
 	},
@@ -537,7 +539,7 @@
 		"attribute": ["artillery"],
 		"retreat": 0.3
 	},
-	//ARM HOVERS
+	// ARMADA HOVERS
 
 	"armch": {
 		"role": ["builder"],
@@ -558,7 +560,7 @@
 		"thr_mod": 0.4
 	},
 
-	// kbot - corlab
+	// bot - corlab
 	"corck": {
 		"role": ["builder"],
 		"limit": 10
@@ -583,7 +585,7 @@
 		"limit": 30
 	},
 
-	// adv kbot - coralab
+	// adv bot - coralab
 	"corack": {
 		"role": ["builder"],
 		"limit": 4
@@ -627,7 +629,7 @@
 		"limit": 1
 	},
 
-	// T3 kbot - corgant
+	// T3 bot - corgant
 	"corshiva": {
 		"role": ["riot", "heavy"]
 	},
@@ -779,7 +781,7 @@
 		"attribute": ["artillery"],
 		"retreat": 0.3
 	},
-//CORE HOVERS
+// CORTEX HOVERS
 
 	"corch": {
 		"role": ["builder"],
