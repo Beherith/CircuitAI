@@ -227,9 +227,10 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 			cdef->AddEnemyRole(ROLE_TYPE(COMM));
 		}
 	}
+
+	ReadConfig();
+
 	// FIXME: BA
-	const char* nanoName = circuit->GetSideName() == "core" ? "cornanotc" : "armnanotc";
-	assistDef = circuit->GetCircuitDef(nanoName);
 	CCircuitDef::Id unitDefId = assistDef->GetId();
 	createdHandler[unitDefId] = assistCreatedHandler;
 	finishedHandler[unitDefId] = assistFinishedHandler;
@@ -237,12 +238,6 @@ CFactoryManager::CFactoryManager(CCircuitAI* circuit)
 	destroyedHandler[unitDefId] = assistDestroyedHandler;
 	factoryPower -= assistDef->GetBuildSpeed() - 4.f;
 	// FIXME: BA
-
-	ReadConfig();
-
-	if (assistDef == nullptr) {
-		assistDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
-	}
 
 	factoryData = circuit->GetAllyTeam()->GetFactoryData().get();
 }
@@ -264,6 +259,13 @@ void CFactoryManager::ReadConfig()
 	airpadDef = circuit->GetCircuitDef(padName.c_str());
 	if (airpadDef == nullptr) {
 		airpadDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
+	}
+
+	const Json::Value& nanotc = root["economy"]["nanotc"];
+	const std::string& nanoName = nanotc.get(circuit->GetSideName(), "").asString();
+	assistDef = circuit->GetCircuitDef(nanoName.c_str());
+	if (assistDef == nullptr) {
+		assistDef = circuit->GetEconomyManager()->GetSideInfo().defaultDef;
 	}
 
 	/*
@@ -368,6 +370,11 @@ void CFactoryManager::ReadConfig()
 		const Json::Value& thrMod = behaviour["thr_mod"];
 		if (!thrMod.isNull()) {
 			cdef->ModThreat(thrMod.asFloat());
+		}
+
+		const Json::Value& buildSpeed = behaviour["build_speed"];
+		if (!buildSpeed.isNull()) {
+			cdef->SetBuildSpeed(buildSpeed.asFloat());
 		}
 	}
 

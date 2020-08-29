@@ -129,17 +129,7 @@ CCircuitDef::CCircuitDef(CCircuitAI* circuit, UnitDef* def, std::unordered_set<I
 	id = def->GetUnitDefId();
 
 	buildDistance = def->GetBuildDistance();
-	// FIXME: BA
-//	buildSpeed    = def->GetBuildSpeed();
-	std::string name = def->GetName();
-	if (name == "armcom" || name == "corcom") {
-		buildSpeed = 5.f;
-	} else if (name == "armnanotc" || name == "cornanotc") {
-		buildSpeed = 12.f;
-	} else {
-		buildSpeed = 10.f;
-	}
-	// FIXME: BA
+	buildSpeed    = def->GetBuildSpeed();
 	maxThisUnit   = def->GetMaxThisUnit();
 
 //	maxRange[static_cast<RangeT>(RangeType::MAX)] = def->GetMaxWeaponRange();

@@ -79,6 +79,10 @@
 		"armada": "armasp",
 		"cortex": "corasp"
 	},
+	"nanotc": {
+		"armada": "armnanotc",
+		"cortex": "cornanotc"
+	},
 
 	// Unknown UnitDef replacer
 	"default": {

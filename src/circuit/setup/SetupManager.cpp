@@ -414,6 +414,10 @@ void CSetupManager::ReadConfig()
 		hide.threat = hhdd.get("threat", 0.f).asFloat();
 		hide.isAir = hhdd.get("air", false).asBool();
 		hide.sqTaskRad = SQUARE(hhdd.get("task_rad", 2000.f).asFloat());
+
+		if (circuit->GetSideName() == comm.get("side", "").asString()) {
+			commChoice = circuit->GetCircuitDef(commName.c_str());
+		}
 	}
 
 //	if (!commChoices.empty()) {
@@ -428,7 +432,6 @@ void CSetupManager::ReadConfig()
 //		}
 //		commChoice = commChoices[choice];
 //	}
-	commChoice = circuit->GetCircuitDef(circuit->GetSideName() == "core" ? "corcom" : "armcom");
 }
 
 bool CSetupManager::HasModules(const CCircuitDef* cdef, unsigned level) const

@@ -32,7 +32,9 @@
 				"threat": 1,
 				"air": true,
 				"task_rad": 350.0
-			}
+			},
+
+			"side": "armada"
 		},
 		"corcom": {
 			// Choice importance, 0 by default
@@ -62,7 +64,9 @@
 				"threat": 1,
 				"air": true,
 				"task_rad": 350.0
-			}
+			},
+
+			"side": "cortex"
 		}
 	}
 }
