@@ -227,15 +227,16 @@ function gadget:DrawWorldPreUnit()
 			end
 			-- I AM GOING TO DO THIS THE STUPID AND SLOW WAY, ideally, you 
 			
-			if threatMapChanged then 
-				Spring.Echo("threatMapChanged updated")
+			--if threatMapChanged then 
+				--Spring.Echo("threatMapChanged updated")
 				threatMapChanged = false
 				clearInstanceTable(circleInstanceVBOsynced) -- remove all our previous geometry from buffer
 				for x = 1, width do
 					px = (x - 1) * size
 					for z = 0, height - 1 do
 						value = threatMap[z * width + x] - base
-						local mycolor = {0.0, 0.0, 0.0, 0.8} -- alpha defined here!
+						draw = (value ~= 0)
+						local mycolor = {0.0, 0.0, 0.0, 0.6} -- alpha defined here!
 						
 						if value > 0 then
 							pz = z * size
@@ -250,26 +251,28 @@ function gadget:DrawWorldPreUnit()
 							--gl.Color(0.0, 0.0, value, 0.6)
 							--gl.DrawGroundQuad(px, pz, px + size, pz + size)
 						end
-						pushElementInstance( -- pushElementInstance(iT,thisInstance, instanceID, updateExisting, noUpload, unitID)
-							circleInstanceVBOsynced, -- the buffer to push into
-							{ -- the data per instance 
-								px + size/2, 0, pz + size/2, size/2, -- in vec4 centerposxyz_radius; 
-								mycolor[1],mycolor[2],mycolor[3],mycolor[4], -- in vec4 color;
-							},
-							nil, -- no instance key given, if given, it will update existing instance with same key instead of new instance
-							true, -- updateExisting
-							true) -- noUpload = true, we will upload whole buffer to gpu after we are done filling it
+						if draw then
+							pushElementInstance( -- pushElementInstance(iT,thisInstance, instanceID, updateExisting, noUpload, unitID)
+								circleInstanceVBOsynced, -- the buffer to push into
+								{ -- the data per instance 
+									px + size/2, 0, (z * size) + size/2, size/2, -- in vec4 centerposxyz_radius; 
+									mycolor[1],mycolor[2],mycolor[3],mycolor[4], -- in vec4 color;
+								},
+								nil, -- no instance key given, if given, it will update existing instance with same key instead of new instance
+								true, -- updateExisting
+								true) -- noUpload = true, we will upload whole buffer to gpu after we are done filling it
+						end
 					end
 				end
 				uploadAllElements(circleInstanceVBOsynced) -- upload everything if noUpload was used
-			end
+			--end
 			
 			
 			-- This part is the drawing part, the whole pushElementInstance only needs to be called every time the 
 			gl.DepthTest(false) -- so that it doesnt get hidden under terrain
 			gl.Texture(0, "$heightmap")
 			circleShadersynced:Activate()
-			Spring.Echo("Drawing AI DBG circleInstanceVBOsynced", circleInstanceVBOsynced.usedElements)
+			--Spring.Echo("Drawing AI DBG circleInstanceVBOsynced", circleInstanceVBOsynced.usedElements)
 			drawInstanceVBO(circleInstanceVBOsynced)
 			circleShadersynced:Deactivate()
 			gl.Texture(0, false)
@@ -288,17 +291,20 @@ function gadget:DrawWorldPreUnit()
 					value = threatMap[z * width + x]
 					if value ~= base then
 						pz = z * size + halfSize
+						
 						local py = spGetGroundHeight(px, pz)
-						if py < 0 then py = 0 end
+						if Spring.IsSphereInView(px, py, pz, size) then
+							if py < 0 then py = 0 end
 
-						gl.PushMatrix()
+							gl.PushMatrix()
 
-						gl.Translate(px, py, pz)
-						gl.Rotate(-90, 1, 0, 0)
---						gl.Rotate(dir, 0, 0, 1)
-						gl.Text(("%.2f"):format(value), 0.0, 0.0, 14, "cno")
+							gl.Translate(px, py, pz)
+							gl.Rotate(-90, 1, 0, 0)
+	--						gl.Rotate(dir, 0, 0, 1)
+							gl.Text(("%.2f"):format(value), 0.0, 0.0, 14, "cno")
 
-						gl.PopMatrix()
+							gl.PopMatrix()
+						end
 					end
 				end
 			end
