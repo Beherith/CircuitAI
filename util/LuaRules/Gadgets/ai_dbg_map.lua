@@ -26,90 +26,95 @@ local mapWidth  = Game.mapSizeX
 local mapHeight = Game.mapSizeZ
 
 -------- GL4 THINGS ----------
-local luaShaderDir = "LuaUI/Widgets/Include/"
-local LuaShader = VFS.Include(luaShaderDir.."LuaShader.lua")
-VFS.Include(luaShaderDir.."instancevbotable.lua")
-
-local circleShader = nil
-local circleInstanceVBO = nil -- THIS IS THE MOST IMPORTANT THING!
-local circleSegments = 8
-
-local vsSrc = [[
-#version 420
-#line 10000
-
-layout (location = 0) in vec4 circlepointposition; // This contains the circle stuff
-layout (location = 1) in vec4 centerposxyz_radius; // this is what is passed for each instance
-layout (location = 2) in vec4 color; 
-
-uniform vec4 circleuniforms; // none yet
-
-uniform sampler2D heightmapTex;
-
-out DataVS {
-	vec4 worldPos; // pos and radius
-	vec4 blendedcolor;
-};
-
-//__ENGINEUNIFORMBUFFERDEFS__
-
-#line 11000
-
-float heightAtWorldPos(vec2 w){ // this gets the world height
-	vec2 uvhm =   vec2(clamp(w.x,8.0,mapSize.x-8.0),clamp(w.y,8.0, mapSize.y-8.0))/ mapSize.xy; 
-	return textureLod(heightmapTex, uvhm, 0.0).x;
-}
-
-void main() {
-	// blend start to end on mod gf%15
-	// float timemix = mod(timeInfo.x,10)*(0.1); //timeInfo.x contains gameframe
-	vec4 circleWorldPos = centerposxyz_radius;
-	circleWorldPos.xz = circlepointposition.xy * circleWorldPos.w +  circleWorldPos.xz;
-	
-	// get heightmap 
-	circleWorldPos.y = max(0.0,heightAtWorldPos(circleWorldPos.xz))+16.0; // add 16, and make sure its > 0
-	
-	// dump to FS
-	worldPos = circleWorldPos;
-	blendedcolor = color; // just dumping this
-	gl_Position = cameraViewProj * vec4(circleWorldPos.xyz, 1.0);
-}
-]]
-
-local fsSrc =  [[
-#version 330
-
-#extension GL_ARB_uniform_buffer_object : require
-#extension GL_ARB_shading_language_420pack: require
-
-#line 20000
-
-uniform vec4 circleuniforms; 
-
-uniform sampler2D heightmapTex;
-
-//__ENGINEUNIFORMBUFFERDEFS__
-
-in DataVS {
-	vec4 worldPos; // w = range
-	vec4 blendedcolor;
-};
-
-out vec4 fragColor;
-
-void main() {
-	fragColor.rgba = blendedcolor.rgba;
-	//fragColor.a *= sin((worldPos.x+worldPos.z)*0.12	 - timeInfo.z*0.033415); // stippling or whatever you want
-}
-]]
 
 
-local function goodbye(reason)
-  Spring.Echo("AI DBG widget exiting with reason: "..reason)
-  gadgetHandler:RemoveGadget()
-end
+
 
 local function initgl4()
+	local goodbye = function(reason)
+	  Spring.Echo("AI DBG widget exiting with reason: "..reason)
+	  gadgetHandler:RemoveGadget()
+	end
+	
+	
+	local luaShaderDir = "LuaUI/Widgets/Include/"
+	local LuaShader = VFS.Include(luaShaderDir.."LuaShader.lua")
+	VFS.Include(luaShaderDir.."instancevbotable.lua")
+
+	local circleShader = nil
+	local circleInstanceVBO = nil -- THIS IS THE MOST IMPORTANT THING!
+	local circleSegments = 8
+
+	local vsSrc = [[
+	#version 420
+	#line 10000
+
+	layout (location = 0) in vec4 circlepointposition; // This contains the circle stuff
+	layout (location = 1) in vec4 centerposxyz_radius; // this is what is passed for each instance
+	layout (location = 2) in vec4 color; 
+
+	uniform vec4 circleuniforms; // none yet
+
+	uniform sampler2D heightmapTex;
+
+	out DataVS {
+		vec4 worldPos; // pos and radius
+		vec4 blendedcolor;
+	};
+
+	//__ENGINEUNIFORMBUFFERDEFS__
+
+	#line 11000
+
+	float heightAtWorldPos(vec2 w){ // this gets the world height
+		vec2 uvhm =   vec2(clamp(w.x,8.0,mapSize.x-8.0),clamp(w.y,8.0, mapSize.y-8.0))/ mapSize.xy; 
+		return textureLod(heightmapTex, uvhm, 0.0).x;
+	}
+
+	void main() {
+		// blend start to end on mod gf%15
+		// float timemix = mod(timeInfo.x,10)*(0.1); //timeInfo.x contains gameframe
+		vec4 circleWorldPos = centerposxyz_radius;
+		circleWorldPos.xz = circlepointposition.xy * circleWorldPos.w +  circleWorldPos.xz;
+		
+		// get heightmap 
+		circleWorldPos.y = max(0.0,heightAtWorldPos(circleWorldPos.xz))+16.0; // add 16, and make sure its > 0
+		
+		// dump to FS
+		worldPos = circleWorldPos;
+		blendedcolor = color; // just dumping this
+		gl_Position = cameraViewProj * vec4(circleWorldPos.xyz, 1.0);
+	}
+	]]
+
+	local fsSrc =  [[
+	#version 330
+
+	#extension GL_ARB_uniform_buffer_object : require
+	#extension GL_ARB_shading_language_420pack: require
+
+	#line 20000
+
+	uniform vec4 circleuniforms; 
+
+	uniform sampler2D heightmapTex;
+
+	//__ENGINEUNIFORMBUFFERDEFS__
+
+	in DataVS {
+		vec4 worldPos; // w = range
+		vec4 blendedcolor;
+	};
+
+	out vec4 fragColor;
+
+	void main() {
+		fragColor.rgba = blendedcolor.rgba;
+		//fragColor.a *= sin((worldPos.x+worldPos.z)*0.12	 - timeInfo.z*0.033415); // stippling or whatever you want
+	}
+	]]
+
+	
 	local engineUniformBufferDefs = LuaShader.GetEngineUniformBufferDefs()
 	circleShader =  LuaShader(
     {
@@ -139,6 +144,7 @@ local function initgl4()
 	circleInstanceVBO.vertexVBO, 
 	circleInstanceVBO.instanceVBO
    )
+   return circleInstanceVBO
 end
 
 
@@ -146,7 +152,6 @@ end
 
 function gadget:Initialize()
 	Spring.Echo("Initialize AI DBG")
-	
 end
 
 local threatMapChanged = false
@@ -194,6 +199,8 @@ function gadget:RecvSkirmishAIMessage(teamID, dataStr)
 	end
 end
 
+local circleInstanceVBOsynced = nil
+
 function gadget:DrawWorldPreUnit()
 	if SYNCED and #SYNCED.threatData.map > 0 then
 		local threatMap = SYNCED.threatData.map
@@ -206,11 +213,14 @@ function gadget:DrawWorldPreUnit()
 --		Spring.Echo(threatMap[(height - 1) * width + width])
 
 		if SYNCED.threatData.isDraw then
+			if circleInstanceVBOsynced == nil then 
+				circleInstanceVBOsynced = initgl4()
+			end
 			-- I AM GOING TO DO THIS THE STUPID AND SLOW WAY, ideally, you 
 			
 			if threatMapChanged then 
 				threatMapChanged = false
-				clearInstanceTable(circleInstanceVBO) -- remove all our previous geometry from buffer
+				clearInstanceTable(circleInstanceVBOsynced) -- remove all our previous geometry from buffer
 				for x = 1, width do
 					px = (x - 1) * size
 					for z = 0, height - 1 do
@@ -231,7 +241,7 @@ function gadget:DrawWorldPreUnit()
 							--gl.DrawGroundQuad(px, pz, px + size, pz + size)
 						end
 						pushElementInstance( -- pushElementInstance(iT,thisInstance, instanceID, updateExisting, noUpload, unitID)
-							circleInstanceVBO, -- the buffer to push into
+							circleInstanceVBOsynced, -- the buffer to push into
 							{ -- the data per instance 
 								px + size/2, 0, pz + size/2, size/2, -- in vec4 centerposxyz_radius; 
 								mycolor[1],mycolor[2],mycolor[3],mycolor[4], -- in vec4 color;
@@ -241,7 +251,7 @@ function gadget:DrawWorldPreUnit()
 							true) -- noUpload = true, we will upload whole buffer to gpu after we are done filling it
 					end
 				end
-				uploadAllElements(circleInstanceVBO) -- upload everything if noUpload was used
+				uploadAllElements(circleInstanceVBOsynced) -- upload everything if noUpload was used
 			end
 			
 			
@@ -249,7 +259,7 @@ function gadget:DrawWorldPreUnit()
 			glDepthTest(false) -- so that it doesnt get hidden under terrain
 			gl.Texture(0, "$heightmap")
 			circleShader:Activate()
-			drawInstanceVBO(circleInstanceVBO)
+			drawInstanceVBO(circleInstanceVBOsynced)
 			circleShader:Deactivate()
 			gl.Texture(0, false)
 			glDepthTest(false)
