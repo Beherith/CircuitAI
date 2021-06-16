@@ -132,7 +132,7 @@ local function initgl4()
   )
   shaderCompiled = circleShader:Initialize()
   if not shaderCompiled then goodbye("Failed to compile AI DBG shader ") end
-  local circleVBO,numVertices = makeCircleVBO(circleSegments)
+  local circleVBO,numVertices = makeCircleVBO(circleSegments + 1)
   local circleInstanceVBOLayout = {
 		  {id = 1, name = 'centerposxyz_radius', size = 4}, -- the start pos + radius
 		  {id = 2, name = 'color', size = 4}, --- color
@@ -140,11 +140,12 @@ local function initgl4()
   circleInstanceVBO = makeInstanceVBOTable(circleInstanceVBOLayout,128, "AI DBG VBO")
   circleInstanceVBO.numVertices = numVertices
   circleInstanceVBO.vertexVBO = circleVBO
+  circleInstanceVBO.primitiveType = GL.TRIANGLE_FAN -- ugh forgot this one
   circleInstanceVBO.VAO = makeVAOandAttach(
 	circleInstanceVBO.vertexVBO, 
 	circleInstanceVBO.instanceVBO
    )
-   return circleInstanceVBO
+   return circleInstanceVBO, circleShader
 end
 
 
@@ -200,6 +201,7 @@ function gadget:RecvSkirmishAIMessage(teamID, dataStr)
 end
 
 local circleInstanceVBOsynced = nil
+local circleShadersynced = nil
 
 function gadget:DrawWorldPreUnit()
 	if SYNCED and #SYNCED.threatData.map > 0 then
@@ -214,11 +216,19 @@ function gadget:DrawWorldPreUnit()
 
 		if SYNCED.threatData.isDraw then
 			if circleInstanceVBOsynced == nil then 
-				circleInstanceVBOsynced = initgl4()
+				circleInstanceVBOsynced, circleShadersynced = initgl4()
+				-- upload a test element inside to test if it even renders
+				pushElementInstance( -- pushElementInstance(iT,thisInstance, instanceID, updateExisting, noUpload, unitID)
+							circleInstanceVBOsynced, -- the buffer to push into
+							{ -- the data per instance 
+								mapWidth/2, 0, mapHeight/2, 128, -- in vec4 centerposxyz_radius; 
+								0,1,0,0.5, -- in vec4 color;
+							})
 			end
 			-- I AM GOING TO DO THIS THE STUPID AND SLOW WAY, ideally, you 
 			
 			if threatMapChanged then 
+				Spring.Echo("threatMapChanged updated")
 				threatMapChanged = false
 				clearInstanceTable(circleInstanceVBOsynced) -- remove all our previous geometry from buffer
 				for x = 1, width do
@@ -256,13 +266,14 @@ function gadget:DrawWorldPreUnit()
 			
 			
 			-- This part is the drawing part, the whole pushElementInstance only needs to be called every time the 
-			glDepthTest(false) -- so that it doesnt get hidden under terrain
+			gl.DepthTest(false) -- so that it doesnt get hidden under terrain
 			gl.Texture(0, "$heightmap")
-			circleShader:Activate()
+			circleShadersynced:Activate()
+			Spring.Echo("Drawing AI DBG circleInstanceVBOsynced", circleInstanceVBOsynced.usedElements)
 			drawInstanceVBO(circleInstanceVBOsynced)
-			circleShader:Deactivate()
+			circleShadersynced:Deactivate()
 			gl.Texture(0, false)
-			glDepthTest(false)
+			gl.DepthTest(false)
 			
 		end
 
